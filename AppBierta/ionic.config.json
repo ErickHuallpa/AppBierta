@@ -1,0 +1,7 @@
+{
+  "name": "AppBierta",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}

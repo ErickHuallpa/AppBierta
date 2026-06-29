@@ -1,0 +1,10 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class UserProductQuota extends Model
+{
+    protected $fillable = ['user_id', 'product_id', 'quantity_bought', 'attempted'];
+}
