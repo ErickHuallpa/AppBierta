@@ -2,7 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar color="dark">
-
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/tabs/profile" color="light" text=""></ion-back-button>
+        </ion-buttons>
         <ion-title>Gestión de Personal</ion-title>
         <ion-buttons slot="end">
           <ion-button router-link="/admin/staff/form">
@@ -44,7 +46,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonMenuButton, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSpinner, toastController, IonBadge } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonMenuButton, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSpinner, toastController, alertController, IonBadge } from '@ionic/vue';
 import { addOutline } from 'ionicons/icons';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
@@ -71,7 +73,18 @@ const editStaff = (id: number) => {
 };
 
 const deleteStaff = async (id: number) => {
-  if (!confirm('¿Estás seguro de borrar este empleado?')) return;
+  const alert = await alertController.create({
+    header: 'Confirmar',
+    message: '¿Estás seguro de borrar este empleado?',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      { text: 'Aceptar', role: 'confirm' }
+    ]
+  });
+  await alert.present();
+  const { role } = await alert.onDidDismiss();
+  if (role !== 'confirm') return;
+
   try {
     await axios.delete(`/api/employees/${id}`);
     loadStaff();
@@ -80,7 +93,7 @@ const deleteStaff = async (id: number) => {
       duration: 2000,
       color: 'success'
     });
-    toast.present();
+    await toast.present();
   } catch (error) {
     const toast = await toastController.create({
       message: 'Error al eliminar',

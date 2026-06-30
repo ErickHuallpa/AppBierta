@@ -1,9 +1,9 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <ion-toolbar style="--background: var(--ion-background-color, #121212);">
+      <ion-toolbar style="--background: #04644c; --color: #ffffff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/cart" text=""></ion-back-button>
+          <ion-back-button default-href="/tabs/cart" text="" color="light"></ion-back-button>
         </ion-buttons>
         <ion-title class="ion-text-center" style="font-weight: 600;">Checkout</ion-title>
       </ion-toolbar>
@@ -212,7 +212,7 @@ const orderSuccess = async () => {
 
 <style scoped>
 ion-content {
-  --background: var(--ion-background-color, #f4f5f8);
+  --background: var(--ion-background-color, #f7f9fc);
 }
 
 .card-box {
@@ -249,7 +249,7 @@ ion-content {
   left: 0;
   width: 100%;
   padding: 15px;
-  background: var(--ion-background-color, #f4f5f8);
+  background: var(--ion-background-color, #f7f9fc);
   z-index: 1000;
 }
 
@@ -258,14 +258,14 @@ ion-content {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  background: #1a1e29;
+  background: #000000;
   color: #fff;
   border: none;
   border-radius: 30px;
   padding: 14px 20px;
   font-size: 1.1rem;
   font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .checkout-button:disabled {

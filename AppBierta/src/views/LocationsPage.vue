@@ -1,21 +1,26 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-
-        <ion-title>Mis Ubicaciones</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/tabs/profile" color="light" text=""></ion-back-button>
+        </ion-buttons>
+        <ion-title style="font-weight: 600;">Mis Ubicaciones</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
-      <ion-list>
-        <ion-item v-for="loc in locations" :key="loc.id">
+    <ion-content class="ion-padding" style="--background: var(--ion-background-color, #f7f9fc);">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
+      <ion-list v-if="locations.length > 0" style="background: transparent;">
+        <ion-item v-for="loc in locations" :key="loc.id" class="location-item">
           <div class="location-content">
             <ion-label>
-              <h2>{{ loc.name }} <ion-badge v-if="loc.is_default" color="success">Principal</ion-badge></h2>
-              <p>{{ loc.address }}</p>
+              <h2 style="font-weight: 600;">{{ loc.name }} <ion-badge v-if="loc.is_default" color="success">Principal</ion-badge></h2>
+              <p style="color: #666;">{{ loc.address }}</p>
             </ion-label>
             <div class="location-actions">
-              <ion-button fill="clear" size="small" color="primary" @click="editLocation(loc.id)">
+              <ion-button fill="clear" size="small" style="--color: #04644c;" @click="editLocation(loc.id)">
                 <ion-icon :icon="createOutline" slot="icon-only"></ion-icon>
               </ion-button>
               <ion-button fill="clear" size="small" color="warning" @click="setDefault(loc.id)" v-if="!loc.is_default">
@@ -43,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, IonButton, onIonViewWillEnter } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonBackButton, onIonViewWillEnter, IonRefresher, IonRefresherContent, alertController } from '@ionic/vue';
 import { add, createOutline, starOutline, trashOutline } from 'ionicons/icons';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -56,9 +61,15 @@ const fetchLocations = async () => {
   try {
     const res = await axios.get('/api/locations');
     locations.value = res.data;
+    window.dispatchEvent(new Event('locationsUpdated'));
   } catch (error) {
     console.error(error);
   }
+};
+
+const handleRefresh = async (event: any) => {
+  await fetchLocations();
+  event.target.complete();
 };
 
 const editLocation = (id: number) => {
@@ -66,13 +77,23 @@ const editLocation = (id: number) => {
 };
 
 const deleteLocation = async (id: number) => {
-  if (confirm('¿Estás seguro de que quieres eliminar esta ubicación?')) {
-    try {
-      await axios.delete(`/api/locations/${id}`);
-      fetchLocations();
-    } catch (e) {
-      console.error(e);
-    }
+  const alert = await alertController.create({
+    header: 'Confirmar',
+    message: '¿Estás seguro de que quieres eliminar esta ubicación?',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      { text: 'Eliminar', role: 'confirm' }
+    ]
+  });
+  await alert.present();
+  const { role } = await alert.onDidDismiss();
+  if (role !== 'confirm') return;
+
+  try {
+    await axios.delete(`/api/locations/${id}`);
+    fetchLocations();
+  } catch (e) {
+    console.error(e);
   }
 };
 
@@ -99,7 +120,16 @@ onIonViewWillEnter(() => {
 .location-actions {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid var(--ion-color-light);
-  margin-top: 8px;
+  border-top: 1px solid var(--ion-color-step-100, #eee);
+  margin-top: 10px;
+  padding-top: 5px;
+}
+.location-item {
+  --background: var(--app-card-bg, #ffffff);
+  --border-radius: 12px;
+  margin-bottom: 15px;
+  --padding-start: 15px;
+  --inner-padding-end: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 </style>

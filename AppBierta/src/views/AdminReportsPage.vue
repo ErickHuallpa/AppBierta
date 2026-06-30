@@ -1,12 +1,18 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="dark">
-        <ion-title>Reportes Avanzados</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/tabs/profile" color="light" text=""></ion-back-button>
+        </ion-buttons>
+        <ion-title style="font-weight: 600;">Reportes de Ventas</ion-title>
       </ion-toolbar>
     </ion-header>
     
-    <ion-content class="ion-padding" color="light">
+    <ion-content class="ion-padding" style="--background: #f7f9fc;">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <!-- Filtros -->
       <ion-card class="pro-card">
         <ion-card-header>
@@ -66,14 +72,12 @@
             <table class="styled-table">
               <thead>
                 <tr>
+                  <th>Pedido #</th>
                   <th>Fecha</th>
                   <th>Cliente</th>
-                  <th>Producto</th>
-                  <th>Cant</th>
-                  <th>P. Compra (Bs)</th>
-                  <th>P. Venta (Bs)</th>
-                  <th>Costo Total (Bs)</th>
-                  <th>Ingreso Total (Bs)</th>
+                  <th>Productos</th>
+                  <th>Costo (Bs)</th>
+                  <th>Ingreso (Bs)</th>
                   <th>Margen (Bs)</th>
                   <th>Método Pago</th>
                   <th>Tipo</th>
@@ -81,26 +85,25 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="sale in rawData.detailed_sales" :key="sale.pedido_id + sale.producto" :class="{'canje-row': parseFloat(sale.precio_venta || 0) === 0}">
-                  <td>{{ new Date(sale.fecha).toLocaleString() }}</td>
-                  <td>{{ sale.cliente }}</td>
-                  <td>{{ sale.producto }}</td>
-                  <td>{{ sale.cantidad }}</td>
-                  <td>{{ sale.precio_compra }}</td>
-                  <td>{{ sale.precio_venta }}</td>
-                  <td>{{ (parseFloat(sale.precio_compra || 0) * parseInt(sale.cantidad || 0)).toFixed(2) }}</td>
-                  <td>{{ (parseFloat(sale.precio_venta || 0) * parseInt(sale.cantidad || 0)).toFixed(2) }}</td>
+                <tr v-for="order in groupedSales" :key="order.pedido_id">
+                  <td>{{ order.pedido_id }}</td>
+                  <td>{{ new Date(order.fecha).toLocaleString() }}</td>
+                  <td>{{ order.cliente }}</td>
                   <td>
-                    <span v-if="parseFloat(sale.precio_venta || 0) === 0">0.00</span>
-                    <span v-else>{{ ((parseFloat(sale.precio_venta || 0) - parseFloat(sale.precio_compra || 0)) * parseInt(sale.cantidad || 0)).toFixed(2) }}</span>
+                    <ul style="margin: 0; padding-left: 15px;">
+                      <li v-for="prod in order.productos" :key="prod">{{ prod }}</li>
+                    </ul>
                   </td>
+                  <td>{{ order.costo_total.toFixed(2) }}</td>
+                  <td>{{ order.ingreso_total.toFixed(2) }}</td>
+                  <td>{{ order.margen.toFixed(2) }}</td>
                   <td>
-                    <ion-badge :color="parseFloat(sale.precio_venta || 0) === 0 ? 'secondary' : (sale.metodo_pago === 'cash' ? 'success' : 'tertiary')">
-                      {{ parseFloat(sale.precio_venta || 0) === 0 ? 'Puntos (Canje)' : (sale.metodo_pago === 'cash' ? 'Efectivo' : 'QR') }}
+                    <ion-badge :color="order.metodo_pago === 'cash' ? 'success' : 'tertiary'">
+                      {{ order.metodo_pago === 'cash' ? 'Efectivo' : 'QR' }}
                     </ion-badge>
                   </td>
-                  <td>{{ sale.tipo_pedido === 'delivery' ? 'Delivery' : 'Tienda' }}</td>
-                  <td>{{ sale.empleado_delivery || 'N/A' }}</td>
+                  <td>{{ order.tipo_pedido === 'delivery' ? 'Delivery' : 'Tienda' }}</td>
+                  <td>{{ order.empleado_delivery || 'N/A' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -123,13 +126,18 @@
             <p>No hay datos disponibles para las fechas seleccionadas.</p>
           </div>
 
-          <div v-if="activeReport === 'sales'" class="chart-container">
+          <div v-if="activeReport === 'sales'">
             <div class="sales-summary ion-margin-bottom">
               <ion-row>
                 <ion-col size="6">
                   <div class="summary-box">
                     <p>Total Ingreso</p>
-                    <h3 style="color: #3880ff;">{{ formatCurrency(salesSummary.ingreso) }} Bs</h3>
+                    <h3 style="color: #04644c;">
+                      {{ formatCurrency(salesSummary.ingreso) }} Bs
+                      <span v-if="salesSummary.delivery > 0" style="font-size: 0.9rem; color: var(--ion-color-medium); display: block; margin-top: 5px;">
+                        (+ {{ formatCurrency(salesSummary.delivery) }} Delivery)
+                      </span>
+                    </h3>
                   </div>
                 </ion-col>
                 <ion-col size="6">
@@ -140,7 +148,9 @@
                 </ion-col>
               </ion-row>
             </div>
-            <Line :data="salesChartData" :options="lineOptions" />
+            <div class="chart-container">
+              <Line :data="salesChartData" :options="lineOptions" />
+            </div>
           </div>
           <div v-else-if="activeReport === 'products'" class="chart-container">
             <Bar :data="productsChartData" :options="barOptions" />
@@ -169,7 +179,7 @@ import { ref, computed, onMounted } from 'vue';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardHeader, 
   IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, 
-  IonInput, IonButton, IonSpinner, IonSegment, IonSegmentButton
+  IonInput, IonButton, IonSpinner, IonSegment, IonSegmentButton, IonRefresher, IonRefresherContent, IonButtons, IonBackButton
 } from '@ionic/vue';
 import axios from 'axios';
 import {
@@ -186,11 +196,12 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 // Estado
 const loading = ref(false);
 const activeReport = ref('sales');
-const rawData = ref({
-  sales: [] as any[],
-  products: [] as any[],
-  users: [] as any[],
-  clients_list: [] as any[]
+const rawData = ref<{sales: any[], products: any[], users: any[], clients_list: any[], detailed_sales?: any[]}>({
+  sales: [],
+  products: [],
+  users: [],
+  clients_list: [],
+  detailed_sales: []
 });
 
 const today = new Date();
@@ -274,18 +285,76 @@ const formatCurrency = (value: number) => {
 const salesSummary = computed(() => {
   let ingreso = 0;
   let margen = 0;
+  let delivery = 0;
+  let ordersCounted = new Set();
+
   if (rawData.value.detailed_sales) {
     rawData.value.detailed_sales.forEach((s: any) => {
       const pCompra = parseFloat(s.precio_compra || '0');
       const pVenta = parseFloat(s.precio_venta || '0');
       const cant = parseInt(s.cantidad || '0');
+      const deliveryCost = parseFloat(s.delivery_cost || '0');
+
       if (pVenta > 0) {
         ingreso += (pVenta * cant);
         margen += ((pVenta * cant) - (pCompra * cant));
       }
+      
+      if (deliveryCost > 0 && !ordersCounted.has(s.pedido_id)) {
+        delivery += deliveryCost;
+      }
+      ordersCounted.add(s.pedido_id);
     });
   }
-  return { ingreso, margen };
+  return { ingreso, margen, delivery };
+});
+
+const groupedSales = computed(() => {
+  if (!rawData.value.detailed_sales) return [];
+  const map = new Map();
+  rawData.value.detailed_sales.forEach((s: any) => {
+    if (!map.has(s.pedido_id)) {
+      map.set(s.pedido_id, {
+        pedido_id: s.pedido_id,
+        fecha: s.fecha,
+        cliente: s.cliente,
+        metodo_pago: s.metodo_pago,
+        tipo_pedido: s.tipo_pedido,
+        empleado_delivery: s.empleado_delivery,
+        delivery_cost: parseFloat(s.delivery_cost || 0),
+        costo_total: 0,
+        ingreso_total: 0,
+        margen: 0,
+        productos: []
+      });
+    }
+    const order = map.get(s.pedido_id);
+    const pCompra = parseFloat(s.precio_compra || 0);
+    const pVenta = parseFloat(s.precio_venta || 0);
+    const cant = parseInt(s.cantidad || 0);
+    
+    order.costo_total += pCompra * cant;
+    order.ingreso_total += pVenta * cant;
+    
+    // Si la venta no es un canje por puntos, sumar margen
+    if (pVenta > 0) {
+        order.margen += (pVenta - pCompra) * cant;
+    }
+    
+    const prodName = pVenta === 0 ? `${s.producto} (Canje)` : s.producto;
+    order.productos.push(`${cant}x ${prodName}`);
+  });
+  
+  // Agregar costo de delivery al total de la orden si corresponde
+  const result = Array.from(map.values());
+  result.forEach((order: any) => {
+    if (order.delivery_cost > 0) {
+      order.ingreso_total += order.delivery_cost;
+      order.productos.push(`1x Delivery (+ Bs. ${order.delivery_cost})`);
+    }
+  });
+  
+  return result;
 });
 
 // Opciones de Gráficos (Modernas)
@@ -323,6 +392,11 @@ const fetchReports = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const handleRefresh = async (event: any) => {
+  await fetchReports();
+  event.target.complete();
 };
 
 // Export to Excel
@@ -503,8 +577,9 @@ onMounted(() => {
 <style scoped>
 .pro-card {
   border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   margin-bottom: 20px;
+  background: #ffffff;
 }
 .pro-input {
   border-radius: 8px;
@@ -548,7 +623,7 @@ onMounted(() => {
   font-size: 1.5em;
 }
 
-/* Table Styles */
+/* Table Styles for Dark Mode Support */
 .table-responsive {
   overflow-x: auto;
   margin-top: 10px;
@@ -559,28 +634,40 @@ onMounted(() => {
   font-size: 0.85em;
   font-family: sans-serif;
   min-width: 1000px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  background-color: #ffffff;
+  color: #333333;
+  border-radius: 8px;
+  overflow: hidden;
 }
 .styled-table thead tr {
-  background-color: #10dc60;
+  background-color: #04644c;
   color: #ffffff;
   text-align: left;
 }
 .styled-table th,
 .styled-table td {
   padding: 10px 12px;
-  border: 1px solid #dddddd;
+  border: 1px solid #e0e0e0;
 }
 .styled-table tbody tr {
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid #e0e0e0;
 }
 .styled-table tbody tr:nth-of-type(even) {
   background-color: #f9f9f9;
 }
 .styled-table tbody tr:last-of-type {
-  border-bottom: 2px solid #10dc60;
+  border-bottom: 2px solid #04644c;
 }
-.canje-row {
-  background-color: #e6f0ff !important;
+.sales-summary {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+}
+.summary-box p {
+  margin: 0 0 5px 0;
+  color: #aaaaaa;
+  font-size: 0.9em;
+  font-weight: 600;
 }
 </style>

@@ -1,14 +1,14 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="primary">
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/admin/dashboard"></ion-back-button>
+          <ion-back-button default-href="/admin/dashboard" color="light"></ion-back-button>
         </ion-buttons>
-        <ion-title>Control de Vencimientos</ion-title>
+        <ion-title style="font-weight: 600;">Control de Vencimientos</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" style="--background: #f7f9fc;">
       <ion-card v-if="batches.length === 0">
         <ion-card-content class="ion-text-center">
           <p>No hay lotes próximos a vencer en las siguientes 4 semanas.</p>
@@ -132,5 +132,10 @@ const openDiscountModal = async (batch: any) => {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+ion-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
 }
 </style>

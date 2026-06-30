@@ -61,6 +61,7 @@ class AuthController extends Controller
             'password' => 'required|min:6',
             'ci_nit' => 'nullable|string|max:20|regex:/^[0-9]{4,15}(-[a-zA-Z0-9]{1,3})?(\s[a-zA-Z]{2,3})?$/',
             'razon_social' => 'nullable|string|max:100',
+            'telefono' => 'nullable|string|max:15',
         ], [
             'nombre.regex' => 'El nombre solo puede contener letras.',
             'apellidos.regex' => 'Los apellidos solo pueden contener letras.',
@@ -73,6 +74,7 @@ class AuthController extends Controller
             'apellidos' => $request->apellidos,
             'ci_nit' => $request->ci_nit,
             'razon_social' => $request->razon_social,
+            'telefono' => $request->telefono,
         ]);
 
         $user = User::create([
@@ -126,6 +128,7 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'ci_nit' => 'nullable|string|max:20|regex:/^[0-9]{4,15}(-[a-zA-Z0-9]{1,3})?(\s[a-zA-Z]{2,3})?$/',
             'razon_social' => 'nullable|string|max:100',
+            'telefono' => 'nullable|string|max:15',
         ], [
             'nombre.regex' => 'El nombre solo puede contener letras.',
             'apellidos.regex' => 'Los apellidos solo pueden contener letras.',
@@ -144,6 +147,7 @@ class AuthController extends Controller
             $user->persona->apellidos = $request->apellidos;
             $user->persona->ci_nit = $request->ci_nit;
             $user->persona->razon_social = $request->razon_social;
+            $user->persona->telefono = $request->telefono;
             $user->persona->save();
         }
 

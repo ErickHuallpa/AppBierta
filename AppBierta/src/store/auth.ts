@@ -1,9 +1,7 @@
 import { reactive } from 'vue';
 import axios from 'axios';
 import router from '../router';
-
-// Configuración base de axios para Sanctum
-axios.defaults.baseURL = 'http://127.0.0.1:8000';
+import { cartState } from './cart';
 
 export const authState = reactive({
   token: localStorage.getItem('token') || null,
@@ -43,6 +41,7 @@ export const authState = reactive({
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
+    cartState.clearCart();
     router.push('/login');
   },
 

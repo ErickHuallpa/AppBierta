@@ -7,12 +7,10 @@ import axios from 'axios';
 
 import { Capacitor } from '@capacitor/core';
 
-// Si es el APK en el celular, usa el túnel. Si es la web en la laptop, usa localhost.
-if (Capacitor.isNativePlatform()) {
-  axios.defaults.baseURL = 'https://cervezas-app-1234.loca.lt';
-} else {
-  axios.defaults.baseURL = 'http://localhost:8000';
-}
+// Configuramos la URL base. Como usarás localtunnel con el subdominio cervezas-app-1234
+// usamos esa URL tanto para el APK como para la web, así evitas problemas de CORS en ambos lados.
+// OJO: Esta es la URL de tu API Laravel a través de localtunnel.
+axios.defaults.baseURL = 'https://cervezas-app-1234.loca.lt';
 axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'true';
 
 // Suprimir advertencias molestas de terceros en la consola
@@ -50,8 +48,8 @@ import '@ionic/vue/css/display.css';
  */
 
 /* @import '@ionic/vue/css/palettes/dark.always.css'; */
-/* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import '@ionic/vue/css/palettes/dark.system.css';
+import '@ionic/vue/css/palettes/dark.class.css';
+/* import '@ionic/vue/css/palettes/dark.system.css'; */
 
 /* Theme variables */
 import './theme/variables.css';

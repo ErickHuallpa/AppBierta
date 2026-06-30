@@ -1,15 +1,15 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="dark">
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/profile"></ion-back-button>
+          <ion-back-button default-href="/tabs/profile" color="light"></ion-back-button>
         </ion-buttons>
-        <ion-title>Punto de Venta (POS)</ion-title>
+        <ion-title style="font-weight: 600;">Punto de Venta (POS)</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding" color="light">
+    <ion-content class="ion-padding" style="--background: #f7f9fc;">
       <ion-grid style="height: 100%;">
         <ion-row style="height: 100%;">
           
@@ -51,8 +51,8 @@
           <!-- Lado Derecho: Carrito y Venta (30%) -->
           <ion-col size="12" size-md="4" class="cart-col">
             <ion-card class="cart-card">
-              <ion-card-header color="primary">
-                <ion-card-title>Detalle de Venta</ion-card-title>
+              <ion-card-header style="background: #000; color: #fff;">
+                <ion-card-title style="color: #fff; font-weight: 600;">Detalle de Venta</ion-card-title>
               </ion-card-header>
 
               <ion-card-content class="ion-no-padding cart-content">
@@ -76,7 +76,7 @@
                       placeholder="Buscar por Nombre, CI o Apellido" 
                       v-model="clientSearchQuery" 
                       @ionInput="searchClients"
-                      debounce="500"
+                      :debounce="500"
                       class="ion-no-padding"
                     ></ion-searchbar>
                     
@@ -137,7 +137,7 @@
                   </ion-select>
                 </ion-item>
 
-                <ion-button expand="block" color="success" class="process-btn" @click="handleProcessSale" :disabled="cart.length === 0 || !selectedClient || processing">
+                <ion-button expand="block" style="--background: #04644c;" class="process-btn" @click="handleProcessSale" :disabled="cart.length === 0 || !selectedClient || processing">
                   <ion-spinner name="crescent" v-if="processing"></ion-spinner>
                   <span v-else>Procesar Venta</span>
                 </ion-button>
@@ -161,15 +161,15 @@
           <ion-list>
             <ion-item>
               <ion-label position="floating">Nombre</ion-label>
-              <ion-input :value="newClientForm.nombre" maxlength="50" required @ionInput="newClientForm.nombre = $event.target.value = ($event.target.value || '').toString().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"></ion-input>
+              <ion-input :value="newClientForm.nombre" :maxlength="50" required @ionInput="newClientForm.nombre = $event.target.value = ($event.target.value || '').toString().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label position="floating">Apellidos</ion-label>
-              <ion-input :value="newClientForm.apellidos" maxlength="50" required @ionInput="newClientForm.apellidos = $event.target.value = ($event.target.value || '').toString().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"></ion-input>
+              <ion-input :value="newClientForm.apellidos" :maxlength="50" required @ionInput="newClientForm.apellidos = $event.target.value = ($event.target.value || '').toString().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label position="floating">CI / NIT</ion-label>
-              <ion-input :value="newClientForm.ci_nit" maxlength="20" @ionInput="newClientForm.ci_nit = $event.target.value = ($event.target.value || '').toString().replace(/[^0-9a-zA-Z\-\s]/g, '')"></ion-input>
+              <ion-input :value="newClientForm.ci_nit" :maxlength="20" @ionInput="newClientForm.ci_nit = $event.target.value = ($event.target.value || '').toString().replace(/[^0-9a-zA-Z\-\s]/g, '')"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label position="floating">Correo Electrónico</ion-label>
@@ -348,8 +348,8 @@ const registerClient = async () => {
   } catch (e: any) {
     let errorMessage = 'Error al registrar cliente.';
     if (e.response?.data?.errors) {
-      const errors = e.response.data.errors;
-      errorMessage = Object.values(errors)[0]?.[0] as string || errorMessage;
+      const errors = e.response.data.errors as Record<string, string[]>;
+      errorMessage = (Object.values(errors)[0] as string[])?.[0] || errorMessage;
     } else if (e.response?.data?.message) {
       errorMessage = e.response.data.message;
     }
@@ -461,7 +461,7 @@ const submitSale = async () => {
 .price-tag {
   font-size: 1.2rem;
   font-weight: bold;
-  color: var(--ion-color-success);
+  color: #04644c;
 }
 
 .cart-col {
@@ -528,7 +528,7 @@ const submitSale = async () => {
   font-weight: bold;
   min-width: 60px;
   text-align: right;
-  color: var(--ion-color-primary);
+  color: #04644c;
 }
 
 .cart-footer {
@@ -549,7 +549,7 @@ const submitSale = async () => {
 
 .total-amount {
   font-size: 1.5rem;
-  color: var(--ion-color-success);
+  color: #04644c;
 }
 
 .payment-method-item {

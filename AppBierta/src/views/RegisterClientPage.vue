@@ -1,60 +1,96 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/login"></ion-back-button>
-        </ion-buttons>
-        <ion-title>Registro de Cliente</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <ion-content class="login-content" :fullscreen="true">
+      <!-- Background Blobs -->
+      <div class="blob blob-top-right"></div>
+      <div class="blob blob-bottom-left"></div>
+      <div class="blob blob-bottom-right"></div>
 
-    <ion-content class="ion-padding">
-      <ion-list>
-          <ion-item lines="none" class="input-item">
-            <ion-input label="Nombre" label-placement="floating" type="text" :value="form.nombre" maxlength="50" required @ionInput="form.nombre = $event.target.value = ($event.target.value || '').toString().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"></ion-input>
-          </ion-item>
-          <ion-item lines="none" class="input-item">
-            <ion-input label="Apellidos" label-placement="floating" type="text" :value="form.apellidos" maxlength="50" required @ionInput="form.apellidos = $event.target.value = ($event.target.value || '').toString().replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"></ion-input>
-          </ion-item>
-          <ion-item lines="none" class="input-item">
-            <ion-input label="CI / NIT" label-placement="floating" type="text" :value="form.ci_nit" maxlength="20" @ionInput="form.ci_nit = $event.target.value = ($event.target.value || '').toString().replace(/[^0-9a-zA-Z\-\s]/g, '')"></ion-input>
-          </ion-item>
-          <ion-item lines="none" class="input-item">
-            <ion-input label="Razón Social (Para Factura)" label-placement="floating" type="text" v-model="form.razon_social" maxlength="100"></ion-input>
-          </ion-item>
-          <ion-item lines="none" class="input-item">
-            <ion-input label="Correo Electrónico" label-placement="floating" type="email" v-model="form.email" required></ion-input>
-          </ion-item>
-          <ion-item lines="none" class="input-item">
-            <ion-select label="Día de Ruta (Entrega Gratis)" label-placement="floating" v-model="form.delivery_route_day" interface="action-sheet">
-              <ion-select-option value="1">Lunes</ion-select-option>
-              <ion-select-option value="2">Martes</ion-select-option>
-              <ion-select-option value="3">Miércoles</ion-select-option>
-              <ion-select-option value="4">Jueves</ion-select-option>
-              <ion-select-option value="5">Viernes</ion-select-option>
-              <ion-select-option value="6">Sábado</ion-select-option>
-              <ion-select-option value="7">Domingo</ion-select-option>
-            </ion-select>
-          </ion-item>
-          <div class="ion-padding-horizontal">
-            <p style="font-size: 0.8rem; color: #666; margin-top: 0; margin-bottom: 15px;">* Tu pedido tendrá envío gratis sin importar el monto si se realiza en este día. Otros días requiere pedido mayor a 1500 Bs.</p>
+      <div class="login-container">
+        <!-- Back button top left -->
+        <ion-button fill="clear" class="back-btn" @click="router.push('/login')">
+          <ion-icon slot="icon-only" :icon="arrowBackOutline"></ion-icon>
+        </ion-button>
+
+        <div class="login-form-wrapper">
+          <div class="header-texts">
+            <h1 class="login-title" style="margin-bottom: 20px;">Registro</h1>
           </div>
-        <ion-item lines="none" class="input-item">
-          <ion-input label="Contraseña" label-placement="floating" type="password" v-model="form.password" required></ion-input>
-        </ion-item>
-      </ion-list>
 
-      <ion-button expand="block" color="primary" class="ion-margin-top" @click="registerClient" :disabled="loading">
-        {{ loading ? 'Registrando...' : 'Registrarse' }}
-      </ion-button>
+          <div class="form-card">
+            <div class="inputs-group">
+              <div class="input-row">
+                <ion-icon :icon="personOutline" class="input-icon"></ion-icon>
+                <input type="text" placeholder="Nombre" v-model="form.nombre" @input="sanitizeNombre" />
+              </div>
+              <div class="input-divider"></div>
+              
+              <div class="input-row">
+                <ion-icon :icon="personOutline" class="input-icon"></ion-icon>
+                <input type="text" placeholder="Apellidos" v-model="form.apellidos" @input="sanitizeApellidos" />
+              </div>
+              <div class="input-divider"></div>
+              
+              <div class="input-row">
+                <ion-icon :icon="cardOutline" class="input-icon"></ion-icon>
+                <input type="text" placeholder="CI / NIT" v-model="form.ci_nit" @input="sanitizeCiNit" />
+              </div>
+              <div class="input-divider"></div>
+              
+              <div class="input-row">
+                <ion-icon :icon="callOutline" class="input-icon"></ion-icon>
+                <input type="tel" placeholder="Teléfono / Celular" v-model="form.telefono" />
+              </div>
+              <div class="input-divider"></div>
+              
+              <div class="input-row">
+                <ion-icon :icon="businessOutline" class="input-icon"></ion-icon>
+                <input type="text" placeholder="Razón Social (Factura)" v-model="form.razon_social" />
+              </div>
+              <div class="input-divider"></div>
+
+              <div class="input-row">
+                <ion-icon :icon="mailOutline" class="input-icon"></ion-icon>
+                <input type="email" placeholder="Correo Electrónico" v-model="form.email" />
+              </div>
+              <div class="input-divider"></div>
+
+              <div class="input-row">
+                <ion-icon :icon="lockClosedOutline" class="input-icon"></ion-icon>
+                <input type="password" placeholder="Contraseña" v-model="form.password" />
+              </div>
+              <div class="input-divider"></div>
+
+              <div class="input-row">
+                <ion-icon :icon="calendarOutline" class="input-icon"></ion-icon>
+                <select v-model="form.delivery_route_day" class="custom-select">
+                  <option value="1">Lunes (Día de Ruta)</option>
+                  <option value="2">Martes (Día de Ruta)</option>
+                  <option value="3">Miércoles (Día de Ruta)</option>
+                  <option value="4">Jueves (Día de Ruta)</option>
+                  <option value="5">Viernes (Día de Ruta)</option>
+                  <option value="6">Sábado (Día de Ruta)</option>
+                  <option value="7">Domingo (Día de Ruta)</option>
+                </select>
+              </div>
+              <p class="route-hint">* Tu pedido tendrá envío gratis si se realiza este día.</p>
+            </div>
+            
+            <button class="submit-btn" @click="registerClient" :disabled="loading">
+              <ion-spinner name="crescent" v-if="loading" color="light"></ion-spinner>
+              <ion-icon :icon="checkmarkOutline" v-else></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonInput, IonButton, IonButtons, IonBackButton, IonSelect, IonSelectOption, toastController } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonIcon, IonSpinner, toastController } from '@ionic/vue';
+import { personOutline, cardOutline, callOutline, businessOutline, mailOutline, lockClosedOutline, calendarOutline, checkmarkOutline, arrowBackOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { authState } from '../store/auth';
@@ -66,10 +102,26 @@ const form = ref({
   apellidos: '',
   ci_nit: '',
   razon_social: '',
+  telefono: '',
   email: '',
   password: '',
   delivery_route_day: '1'
 });
+
+const sanitizeNombre = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  form.value.nombre = target.value = target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+};
+
+const sanitizeApellidos = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  form.value.apellidos = target.value = target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+};
+
+const sanitizeCiNit = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  form.value.ci_nit = target.value = target.value.replace(/[^0-9a-zA-Z\-\s]/g, '');
+};
 
 const registerClient = async () => {
   if (!form.value.nombre || !form.value.apellidos || !form.value.email || !form.value.password) {
@@ -89,9 +141,8 @@ const registerClient = async () => {
   } catch (error: any) {
     let errorMessage = 'Error al registrar el cliente';
     if (error.response?.data?.errors) {
-      // Tomamos el primer error de validación que retorne el backend
-      const errors = error.response.data.errors;
-      errorMessage = Object.values(errors)[0]?.[0] as string || errorMessage;
+      const errors = error.response.data.errors as Record<string, string[]>;
+      errorMessage = (Object.values(errors)[0] as string[])?.[0] || errorMessage;
     } else if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
     }
@@ -107,3 +158,158 @@ const registerClient = async () => {
   }
 };
 </script>
+
+<style scoped>
+.login-content {
+  --background: #ffffff;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.blob-top-right {
+  top: -15vh;
+  right: -20vw;
+  width: 70vw;
+  height: 70vw;
+  background-color: #04644c;
+}
+
+.blob-bottom-left {
+  bottom: -15vh;
+  left: -20vw;
+  width: 60vw;
+  height: 60vw;
+  background-color: #000000;
+}
+
+.blob-bottom-right {
+  bottom: -10vh;
+  right: -30vw;
+  width: 50vw;
+  height: 50vw;
+  background-color: #000000;
+  opacity: 0.8;
+}
+
+.login-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  min-height: 100vh;
+}
+
+.back-btn {
+  align-self: flex-start;
+  margin-left: -15px;
+  margin-top: 10px;
+  --color: #333;
+}
+
+.login-form-wrapper {
+  margin-top: 20px;
+  padding-bottom: 50px;
+}
+
+.header-texts {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0;
+}
+
+.form-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputs-group {
+  background: #fff;
+  border-radius: 0 40px 40px 0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  width: 90%; 
+  padding: 10px 40px 10px 0;
+  margin-left: -30px; 
+  padding-left: 50px;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  padding: 15px 0;
+}
+
+.input-icon {
+  font-size: 1.2rem;
+  color: #555;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.input-row input, .custom-select {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 1rem;
+  color: #333;
+  background: transparent;
+  font-family: inherit;
+}
+
+.custom-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  color: #666;
+}
+
+.input-row input::placeholder {
+  color: #999;
+}
+
+.input-divider {
+  height: 1px;
+  background: #f0f0f0;
+  width: 100%;
+}
+
+.route-hint {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+.submit-btn {
+  position: absolute;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #04644c;
+  color: #fff;
+  border: none;
+  box-shadow: 0 5px 15px rgba(4, 100, 76, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+}
+</style>

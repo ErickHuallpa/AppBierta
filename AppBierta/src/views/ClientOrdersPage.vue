@@ -1,12 +1,19 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <ion-toolbar>
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/tabs/profile" color="light" text=""></ion-back-button>
+        </ion-buttons>
         <ion-title class="ion-text-center" style="font-weight: 600;">Mis Pedidos</ion-title>
       </ion-toolbar>
     </ion-header>
     
-    <ion-content color="light">
+    <ion-content style="--background: var(--ion-background-color, #f7f9fc);">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
+
       <div v-if="loading" class="ion-text-center ion-padding" style="margin-top: 50px;">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
@@ -29,7 +36,11 @@
             </p>
           </div>
           <div class="order-body">
-            <div class="order-total">Bs. {{ order.total_amount + order.delivery_cost }}</div>
+            <div class="order-total-info">
+              <div class="order-subtotal">Subtotal: Bs. {{ order.total_amount }}</div>
+              <div v-if="order.delivery_cost > 0" class="order-delivery">+ Bs. {{ order.delivery_cost }} Delivery</div>
+              <div class="order-total">Total: Bs. {{ parseFloat(order.total_amount) + parseFloat(order.delivery_cost) }}</div>
+            </div>
             <div class="order-status">
               <ion-badge :color="getStatusColor(order.status)">
                 {{ getStatusText(order.status) }}
@@ -42,14 +53,14 @@
       <!-- Detalle Modal -->
       <ion-modal :is-open="selectedOrder !== null" @didDismiss="selectedOrder = null">
         <ion-header class="ion-no-border">
-          <ion-toolbar>
+          <ion-toolbar style="--background: #04644c; color: #ffffff;">
             <ion-title>Detalle #{{ selectedOrder?.id }}</ion-title>
             <ion-buttons slot="end">
-              <ion-button @click="selectedOrder = null">Cerrar</ion-button>
+              <ion-button @click="selectedOrder = null" color="light">Cerrar</ion-button>
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
-        <ion-content class="ion-padding" color="light">
+        <ion-content class="ion-padding" style="--background: #f7f9fc;">
           <div v-if="selectedOrder" class="details-card">
             
             <div class="detail-section">
@@ -83,7 +94,7 @@
               <h3>Resumen de Pago</h3>
               <p>Subtotal: Bs. {{ selectedOrder.total_amount }}</p>
               <p>Envío: Bs. {{ selectedOrder.delivery_cost }}</p>
-              <h2 style="color:#ff4757; font-weight:bold; margin-top:5px;">Total: Bs. {{ selectedOrder.total_amount + selectedOrder.delivery_cost }}</h2>
+              <h2 style="color:#04644c; font-weight:bold; margin-top:5px;">Total: Bs. {{ selectedOrder.total_amount + selectedOrder.delivery_cost }}</h2>
               <p style="font-size: 0.85rem; color:var(--ion-color-medium)">Método: {{ selectedOrder.payment_method === 'cash' ? 'Efectivo' : 'Transferencia QR' }}</p>
             </div>
 
@@ -116,7 +127,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonSpinner, IonIcon, IonButton, IonBadge, IonModal, IonButtons, IonList, IonItem, IonLabel, toastController } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonSpinner, IonIcon, IonButton, IonBadge, IonModal, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent, toastController } from '@ionic/vue';
 import { receiptOutline, star, starOutline } from 'ionicons/icons';
 import axios from 'axios';
 
@@ -138,6 +149,17 @@ const fetchOrders = async () => {
     console.error(e);
   } finally {
     loading.value = false;
+  }
+};
+
+const handleRefresh = async (event: any) => {
+  try {
+    const res = await axios.get('/api/my-orders');
+    orders.value = res.data;
+  } catch (e) {
+    console.error(e);
+  } finally {
+    event.target.complete();
   }
 };
 
@@ -192,6 +214,9 @@ const getStatusColor = (status: string) => {
 </script>
 
 <style scoped>
+ion-content {
+  --background: #f7f9fc;
+}
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -211,11 +236,11 @@ const getStatusColor = (status: string) => {
 }
 
 .order-card {
-  background: var(--ion-card-background, #fff);
+  background: var(--app-card-bg, #ffffff);
   border-radius: 12px;
   padding: 15px;
   margin-bottom: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .order-header {
@@ -227,15 +252,15 @@ const getStatusColor = (status: string) => {
 }
 
 .order-id {
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 1.05rem;
   color: var(--ion-text-color, #333);
 }
 
 .order-preview {
-  margin-bottom: 12px;
-  padding: 8px;
-  background: var(--ion-color-light);
-  border-radius: 8px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--ion-color-step-100, #eee);
+  padding-bottom: 10px;
 }
 
 .preview-text {
@@ -250,10 +275,21 @@ const getStatusColor = (status: string) => {
   align-items: center;
 }
 
+.order-total-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-subtotal, .order-delivery {
+  font-size: 0.85rem;
+  color: var(--ion-color-step-500, #666);
+}
+
 .order-total {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #ff4757;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--ion-color-primary, #04644c);
+  margin-top: 3px;
 }
 
 .details-card {
@@ -268,14 +304,16 @@ const getStatusColor = (status: string) => {
 
 .detail-section h3 {
   font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 10px;
+  font-weight: 600;
   color: var(--ion-text-color, #333);
-  border-bottom: 1px solid var(--ion-color-light);
-  padding-bottom: 5px;
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
-.items-list {
-  background: transparent;
+.items-list ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --background: transparent;
+  color: var(--ion-text-color, #000);
 }
 </style>

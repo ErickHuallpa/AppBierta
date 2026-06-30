@@ -1,11 +1,11 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="primary">
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/delivery"></ion-back-button>
+          <ion-back-button default-href="/tabs/delivery" color="light"></ion-back-button>
         </ion-buttons>
-        <ion-title>Ruta #{{ order?.id }}</ion-title>
+        <ion-title style="font-weight: 600;">Ruta #{{ order?.id }}</ion-title>
       </ion-toolbar>
     </ion-header>
     
@@ -24,7 +24,7 @@
         <div class="route-info">
           <h2>{{ order.location?.name || order.location?.address }}</h2>
           <p v-if="order.location?.reference">{{ order.location?.reference }}</p>
-          <p v-if="distance" style="color: var(--ion-color-primary); font-weight: bold;">
+          <p v-if="distance" style="color: #04644c; font-weight: bold;">
             <ion-icon :icon="navigateOutline"></ion-icon> A {{ distance }} km de ti
           </p>
           
@@ -38,7 +38,7 @@
             <span><strong>Cobrar:</strong> Bs. {{ order.total_amount + order.delivery_cost }}</span>
           </div>
           <div class="payment-info" v-else>
-            <ion-icon :icon="qrCodeOutline" style="font-size: 24px; margin-right: 8px; color: var(--ion-color-primary);"></ion-icon>
+            <ion-icon :icon="qrCodeOutline" style="font-size: 24px; margin-right: 8px; color: #04644c;"></ion-icon>
             <span><strong>Pagado por QR</strong></span>
           </div>
         </div>
@@ -47,7 +47,7 @@
 
     <ion-footer class="ion-no-border" v-if="order">
       <ion-toolbar class="ion-padding">
-        <ion-button expand="block" color="success" size="large" @click="markDelivered(order.id)">
+        <ion-button expand="block" style="--background: #000; color: #fff;" size="large" @click="markDelivered(order.id)">
           <ion-icon slot="start" :icon="checkmarkCircleOutline"></ion-icon>
           MARCAR COMO ENTREGADO
         </ion-button>
@@ -235,7 +235,7 @@ const markDelivered = async (id: number) => {
   display: flex;
   align-items: center;
   font-weight: 500;
-  color: var(--ion-color-primary);
+  color: #04644c;
   border-top: 1px solid var(--ion-color-light);
   padding-top: 10px;
 }

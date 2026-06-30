@@ -5,7 +5,7 @@ export const cartState = reactive({
   checkout: {
     order_type: 'delivery' as 'delivery' | 'pickup',
     notes: '',
-    payment_method: 'cash' as 'cash' | 'qr',
+    payment_method: 'cash' as 'cash' | 'qr' | 'points',
     location_id: null as number | null,
     nit: '',
     razon_social: ''

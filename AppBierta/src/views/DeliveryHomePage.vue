@@ -1,12 +1,11 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="warning">
-
-        <ion-title>Zona Delivery</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
+        <ion-title style="font-weight: 600;">Zona Delivery</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content color="light">
+    <ion-content class="ion-padding" style="--background: #f7f9fc;">
       <div class="ion-padding">
         <ion-segment v-model="segment">
           <ion-segment-button value="available">
@@ -20,15 +19,15 @@
 
       <div v-if="segment === 'available'">
         <ion-list class="items-list">
-          <ion-item v-for="order in availableOrders" :key="order.id" class="ion-margin-bottom" button @click="openDetails(order)">
+          <ion-item v-for="order in availableOrders" :key="order.id" class="ion-margin-bottom order-item" button @click="openDetails(order)" lines="none">
             <ion-label>
-              <h2>Pedido #{{ order.id }}</h2>
+              <h2 style="font-weight: 600;">Pedido #{{ order.id }}</h2>
               <p v-if="order.distance" style="color: var(--ion-color-primary); font-weight: 600;">
                 <ion-icon :icon="navigateOutline"></ion-icon> A {{ order.distance }} km de ti
               </p>
               <p>Método: {{ order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia QR' }}</p>
             </ion-label>
-            <ion-button slot="end" @click.stop="acceptOrder(order.id)">Aceptar</ion-button>
+            <ion-button slot="end" style="--background: #04644c;" @click.stop="acceptOrder(order.id)">Aceptar</ion-button>
           </ion-item>
         </ion-list>
         
@@ -40,9 +39,9 @@
 
       <div v-if="segment === 'mine'">
         <ion-list class="items-list">
-          <ion-item v-for="order in myOrders" :key="order.id" class="ion-margin-bottom">
+          <ion-item v-for="order in myOrders" :key="order.id" class="ion-margin-bottom order-item" lines="none">
             <ion-label>
-              <h2>Pedido #{{ order.id }}</h2>
+              <h2 style="font-weight: 600;">Pedido #{{ order.id }}</h2>
               <p>Destino: {{ order.location?.name }} - {{ order.location?.address }}</p>
               <p v-if="order.status === 'delivered'" style="color: #2ed573; font-weight: bold; margin-top: 5px;">Entregado</p>
               <p v-else style="color: #ff9f43; font-weight: bold; margin-top: 5px;">En Ruta</p>
@@ -67,14 +66,14 @@
       <!-- Detalle Modal -->
       <ion-modal :is-open="selectedOrder !== null" @didDismiss="selectedOrder = null">
         <ion-header class="ion-no-border">
-          <ion-toolbar>
+          <ion-toolbar style="--background: #04644c; color: #ffffff;">
             <ion-title>Detalle #{{ selectedOrder?.id }}</ion-title>
             <ion-buttons slot="end">
-              <ion-button @click="selectedOrder = null">Cerrar</ion-button>
+              <ion-button @click="selectedOrder = null" color="light">Cerrar</ion-button>
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
-        <ion-content class="ion-padding" color="light">
+        <ion-content class="ion-padding" style="--background: #f7f9fc;">
           <div v-if="selectedOrder" class="details-card">
             
             <div class="detail-section">
@@ -287,5 +286,14 @@ onIonViewWillEnter(() => {
 <style scoped>
 .items-list {
   background: transparent;
+}
+.order-item {
+  --background: #ffffff;
+  --border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  --padding-start: 15px;
+  --inner-padding-end: 15px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
 }
 </style>

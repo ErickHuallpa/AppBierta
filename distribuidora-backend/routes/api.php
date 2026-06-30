@@ -21,6 +21,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/products', function () {
     return \App\Models\Product::all();
 });
+Route::get('/categories', [\App\Http\Controllers\AdminController::class, 'getCategories']);
 
 // Rutas Protegidas por Autenticación
 Route::middleware('auth:sanctum')->group(function () {
@@ -76,7 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/delivery/orders/{id}/delivered', [DeliveryController::class, 'markAsDelivered']);
 
     // Admin Routes (Lotes, Proveedores, Categorías)
-    Route::get('/categories', [\App\Http\Controllers\AdminController::class, 'getCategories']);
+    // Categorías admin
     Route::post('/categories', [\App\Http\Controllers\AdminController::class, 'addCategory']);
     Route::put('/categories/{id}', [\App\Http\Controllers\AdminController::class, 'updateCategory']);
     Route::delete('/categories/{id}', [\App\Http\Controllers\AdminController::class, 'deleteCategory']);

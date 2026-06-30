@@ -1,9 +1,9 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <ion-toolbar style="--background: #121212; color: #fff;">
+      <ion-toolbar style="--background: #04644c; color: #fff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/home"></ion-back-button>
+          <ion-back-button default-href="/tabs/home" text="" color="light"></ion-back-button>
         </ion-buttons>
         <ion-title class="ion-text-center" style="font-weight: 600;">Mis Recompensas</ion-title>
       </ion-toolbar>
@@ -128,14 +128,15 @@ onMounted(() => {
 
 <style scoped>
 .points-header {
-  background: #121212;
+  background: #04644c;
   color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px 20px 40px;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  box-shadow: 0 10px 20px rgba(4, 100, 76, 0.2);
 }
 
 .points-icon {

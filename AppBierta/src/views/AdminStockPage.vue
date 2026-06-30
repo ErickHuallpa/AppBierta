@@ -1,28 +1,28 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="primary">
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/admin/dashboard"></ion-back-button>
+          <ion-back-button default-href="/admin/dashboard" color="light"></ion-back-button>
         </ion-buttons>
-        <ion-title>Ingreso de Stock</ion-title>
+        <ion-title style="font-weight: 600;">Ingreso de Stock</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
-      <ion-card>
+    <ion-content class="ion-padding" style="--background: #f7f9fc;">
+      <ion-card class="pro-card">
         <ion-card-header>
           <ion-card-title>Registrar Nuevo Lote</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <form @submit.prevent="submitBatch">
-            <ion-item>
+            <ion-item class="pro-input" lines="none">
               <ion-label position="stacked">Producto</ion-label>
               <ion-select v-model="form.product_id" placeholder="Selecciona un producto">
                 <ion-select-option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</ion-select-option>
               </ion-select>
             </ion-item>
 
-            <ion-item>
+            <ion-item class="pro-input" lines="none">
               <ion-label position="stacked">Proveedor (Opcional)</ion-label>
               <ion-select v-model="form.supplier_id" placeholder="Selecciona un proveedor">
                 <ion-select-option :value="null">Ninguno</ion-select-option>
@@ -31,22 +31,22 @@
               <ion-button slot="end" fill="clear" @click="promptAddSupplier">+ Nuevo</ion-button>
             </ion-item>
 
-            <ion-item>
+            <ion-item class="pro-input" lines="none">
               <ion-label position="stacked">Cantidad (Unidades)</ion-label>
               <ion-input type="number" v-model="form.quantity" required min="1"></ion-input>
             </ion-item>
 
-            <ion-item>
+            <ion-item class="pro-input" lines="none">
               <ion-label position="stacked">Precio de Compra Unitario (Bs)</ion-label>
               <ion-input type="number" step="0.01" v-model="form.purchase_price" required min="0"></ion-input>
             </ion-item>
 
-            <ion-item>
+            <ion-item class="pro-input" lines="none">
               <ion-label position="stacked">Fecha de Consumo Preferente</ion-label>
               <ion-input type="date" v-model="form.expiry_date"></ion-input>
             </ion-item>
 
-            <ion-button expand="block" type="submit" class="ion-margin-top" :disabled="loading">
+            <ion-button expand="block" type="submit" class="ion-margin-top" style="--background: #000; height: 50px; font-weight: bold;" :disabled="loading">
               {{ loading ? 'Guardando...' : 'Registrar Ingreso' }}
             </ion-button>
           </form>
@@ -142,3 +142,17 @@ const promptAddSupplier = async () => {
   await alert.present();
 };
 </script>
+
+<style scoped>
+.pro-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+}
+.pro-input {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  --padding-start: 10px;
+}
+</style>

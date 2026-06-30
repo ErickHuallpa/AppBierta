@@ -1,12 +1,15 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <ion-toolbar style="--background: #121212; color: #fff;">
+      <ion-toolbar style="--background: #04644c; color: #fff;">
         <ion-title class="ion-text-center" style="font-weight: 600;">Mi Perfil</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content color="light">
+    <ion-content style="--background: var(--ion-background-color, #f7f9fc);">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <div class="profile-header">
         <ion-icon :icon="personCircleOutline" class="avatar-icon"></ion-icon>
         <h2 class="profile-name">{{ authState.user?.persona?.nombre }} {{ authState.user?.persona?.apellidos }}</h2>
@@ -24,6 +27,11 @@
           <ion-item button :detail="true" lines="none" class="no-bg-item" @click="isChangePasswordOpen = true">
             <ion-icon :icon="lockClosedOutline" slot="start" color="medium"></ion-icon>
             <ion-label>Cambiar contraseña</ion-label>
+          </ion-item>
+          <ion-item lines="none" class="no-bg-item">
+            <ion-icon :icon="moonOutline" slot="start" color="medium"></ion-icon>
+            <ion-label>Modo Oscuro</ion-label>
+            <ion-toggle slot="end" :checked="isDarkMode" @ionChange="toggleDarkMode"></ion-toggle>
           </ion-item>
         </div>
         
@@ -101,6 +109,9 @@
               <ion-input label="CI/NIT" label-placement="floating" v-model="profileForm.ci_nit"></ion-input>
             </ion-item>
             <ion-item lines="none" class="input-item" style="margin-top:15px;">
+              <ion-input label="Teléfono / Celular" label-placement="floating" type="tel" v-model="profileForm.telefono"></ion-input>
+            </ion-item>
+            <ion-item lines="none" class="input-item" style="margin-top:15px;">
               <ion-input label="Razón Social (Para Factura)" label-placement="floating" v-model="profileForm.razon_social"></ion-input>
             </ion-item>
             <ion-item lines="none" class="input-item" style="margin-top:15px;">
@@ -149,8 +160,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonBadge, IonItem, IonLabel, IonModal, IonButtons, IonButton, IonInput, IonSpinner, IonSelect, IonSelectOption, toastController, IonToggle } from '@ionic/vue';
-import { personCircleOutline, logOutOutline, createOutline, lockClosedOutline, cubeOutline, cashOutline, peopleOutline, pieChartOutline, bicycleOutline, timeOutline, cartOutline } from 'ionicons/icons';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel, IonIcon, IonToggle, IonButton, IonModal, IonInput, IonSpinner, IonButtons, toastController, IonRefresher, IonRefresherContent, IonBadge } from '@ionic/vue';
+import { personCircleOutline, logOutOutline, createOutline, lockClosedOutline, moonOutline, cubeOutline, cashOutline, peopleOutline, pieChartOutline, bicycleOutline, timeOutline, cartOutline } from 'ionicons/icons';
 import { authState } from '../store/auth';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -161,6 +172,14 @@ const isEditProfileOpen = ref(false);
 const isChangePasswordOpen = ref(false);
 const isLoading = ref(false);
 const enforceTimeLimit = ref(true);
+const isDarkMode = ref(document.body.classList.contains('dark'));
+
+const toggleDarkMode = () => {
+  document.documentElement.classList.toggle('ion-palette-dark');
+  document.body.classList.toggle('dark');
+  isDarkMode.value = document.body.classList.contains('dark');
+  localStorage.setItem('color-theme', isDarkMode.value ? 'dark' : 'light');
+};
 
 const fetchTimeLimit = async () => {
   if (authState.isAdmin) {
@@ -196,6 +215,7 @@ const profileForm = ref({
   apellidos: '',
   ci_nit: '',
   razon_social: '',
+  telefono: '',
   email: '',
   delivery_route_day: 1
 });
@@ -213,7 +233,9 @@ const openEditProfile = () => {
       apellidos: authState.user.persona?.apellidos || '',
       ci_nit: authState.user.persona?.ci_nit || '',
       razon_social: authState.user.persona?.razon_social || '',
-      email: authState.user.email || ''
+      telefono: authState.user.persona?.telefono || '',
+      email: authState.user.email || '',
+      delivery_route_day: authState.user.delivery_route_day || 1
     };
   }
   isEditProfileOpen.value = true;
@@ -272,6 +294,11 @@ const logout = async () => {
   authState.logout();
 };
 
+const handleRefresh = async (event: any) => {
+  await fetchUserProfile();
+  event.target.complete();
+};
+
 onMounted(() => {
   fetchTimeLimit();
   fetchUserProfile();
@@ -280,11 +307,11 @@ onMounted(() => {
 
 <style scoped>
 ion-content {
-  --background: var(--ion-color-step-50, #f4f5f8);
+  --background: var(--ion-color-step-50, #f7f9fc);
 }
 
 .profile-header {
-  background: #121212;
+  background: #04644c;
   color: #fff;
   display: flex;
   flex-direction: column;

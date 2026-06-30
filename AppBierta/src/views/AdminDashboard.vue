@@ -1,10 +1,10 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="dark">
-        <ion-title>Panel de Administración</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
+        <ion-title style="font-weight: 600;">Panel de Administración</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="logout">Salir</ion-button>
+          <ion-button @click="logout" color="light">Salir</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -53,30 +53,30 @@
         </ion-card>
       </div>
 
-      <ion-card v-if="authState.isAdmin" class="ion-margin-top">
+      <ion-card v-if="authState.isAdmin" class="ion-margin-top admin-card">
         <ion-card-header>
           <ion-card-title>Registrar Nuevo Empleado</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-list>
-            <ion-item>
+            <ion-item class="input-item" lines="none">
               <ion-label position="floating">Nombre</ion-label>
               <ion-input v-model="emp.nombre"></ion-input>
             </ion-item>
-            <ion-item>
+            <ion-item class="input-item" lines="none">
               <ion-label position="floating">Apellidos</ion-label>
               <ion-input v-model="emp.apellidos"></ion-input>
             </ion-item>
-            <ion-item>
+            <ion-item class="input-item" lines="none">
               <ion-label position="floating">Email</ion-label>
               <ion-input type="email" v-model="emp.email"></ion-input>
             </ion-item>
-            <ion-item>
+            <ion-item class="input-item" lines="none">
               <ion-label position="floating">Contraseña temporal</ion-label>
               <ion-input type="password" v-model="emp.password"></ion-input>
             </ion-item>
           </ion-list>
-          <ion-button expand="block" color="dark" class="ion-margin-top" @click="registerEmployee" :disabled="loading">
+          <ion-button expand="block" class="ion-margin-top" style="--background: #000;" @click="registerEmployee" :disabled="loading">
             {{ loading ? 'Guardando...' : 'Crear Empleado' }}
           </ion-button>
         </ion-card-content>
@@ -125,9 +125,26 @@ const registerEmployee = async () => {
 </script>
 
 <style scoped>
+ion-content {
+  --background: #f7f9fc;
+}
 .menu-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
+}
+ion-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  background: #ffffff;
+}
+.admin-card {
+  padding: 10px;
+}
+.input-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-top: 10px;
+  --padding-start: 10px;
 }
 </style>

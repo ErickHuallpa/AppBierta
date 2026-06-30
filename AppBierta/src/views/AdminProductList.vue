@@ -1,24 +1,29 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="dark">
-
-        <ion-title>Gestión de Productos</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/tabs/profile" color="light" text=""></ion-back-button>
+        </ion-buttons>
+        <ion-title style="font-weight: 600;">Gestión de Productos</ion-title>
         <ion-buttons slot="end">
-          <ion-button router-link="/admin/products/form">
+          <ion-button router-link="/admin/products/form" color="light">
             <ion-icon slot="icon-only" :icon="addOutline"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" style="--background: #f7f9fc;">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <ion-button expand="block" router-link="/admin/stock" style="flex:1" color="tertiary">
+        <ion-button expand="block" router-link="/admin/stock" style="flex:1; --background: #04644c; color: #fff;">
           <ion-icon :icon="cubeOutline" slot="start"></ion-icon>
           Ingresar Stock
         </ion-button>
-        <ion-button expand="block" router-link="/admin/batches" style="flex:1" color="warning">
+        <ion-button expand="block" router-link="/admin/batches" style="flex:1; --background: #000; color: #fff;">
           <ion-icon :icon="calendarOutline" slot="start"></ion-icon>
           Vencimientos
         </ion-button>
@@ -52,7 +57,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSpinner, toastController, onIonViewWillEnter } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSpinner, toastController, alertController, onIonViewWillEnter, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import { addOutline, cubeOutline, calendarOutline } from 'ionicons/icons';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
@@ -74,12 +79,28 @@ onIonViewWillEnter(() => {
   loadProducts();
 });
 
+const handleRefresh = async (event: any) => {
+  await loadProducts();
+  event.target.complete();
+};
+
 const editProduct = (id: number) => {
   router.push(`/admin/products/form/${id}`);
 };
 
 const deleteProduct = async (id: number) => {
-  if (!confirm('¿Estás seguro de borrar este producto?')) return;
+  const alert = await alertController.create({
+    header: 'Confirmar',
+    message: '¿Estás seguro de borrar este producto?',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      { text: 'Aceptar', role: 'confirm' }
+    ]
+  });
+  await alert.present();
+  const { role } = await alert.onDidDismiss();
+  if (role !== 'confirm') return;
+
   try {
     await axios.delete(`/api/products/${id}`);
     loadProducts();
@@ -88,7 +109,7 @@ const deleteProduct = async (id: number) => {
       duration: 2000,
       color: 'success'
     });
-    toast.present();
+    await toast.present();
   } catch (error) {
     const toast = await toastController.create({
       message: 'Error al eliminar',
@@ -99,3 +120,11 @@ const deleteProduct = async (id: number) => {
   }
 };
 </script>
+
+<style scoped>
+ion-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+}
+</style>

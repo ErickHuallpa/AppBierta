@@ -1,23 +1,27 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <ion-toolbar style="--background: var(--ion-background-color, #121212);">
+      <ion-toolbar style="--background: var(--ion-color-primary, #04644c); color: #ffffff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/home" text=""></ion-back-button>
+          <ion-back-button default-href="/tabs/home" text="" color="light"></ion-back-button>
         </ion-buttons>
         <ion-title class="ion-text-center" style="font-weight: 600;">
           {{ pageTitle }}
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button router-link="/tabs/cart">
-            <ion-icon slot="icon-only" :icon="cartOutline" color="dark"></ion-icon>
+          <ion-button router-link="/tabs/cart" color="light">
+            <ion-icon slot="icon-only" :icon="cartOutline"></ion-icon>
             <ion-badge color="danger" v-if="cart.items.length > 0" class="cart-badge">{{ cart.totalItems }}</ion-badge>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content color="light" class="ion-padding">
+    <ion-content class="ion-padding" style="--background: var(--ion-background-color, #f7f9fc);">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
+
       <div v-if="loading" class="ion-text-center" style="margin-top: 50px;">
         <ion-spinner name="crescent"></ion-spinner>
       </div>
@@ -78,7 +82,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonBadge, IonSpinner, IonModal, toastController } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonBadge, IonSpinner, IonModal, toastController, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import { cartOutline, searchOutline, addOutline, removeOutline } from 'ionicons/icons';
 import axios from 'axios';
 import { cartState } from '../store/cart';
@@ -122,8 +126,7 @@ const pageTitle = computed(() => {
   return categoryName.value;
 });
 
-onMounted(async () => {
-  loading.value = true;
+const fetchProducts = async () => {
   try {
     const res = await axios.get('/api/products');
     let allProducts = res.data;
@@ -146,10 +149,19 @@ onMounted(async () => {
     products.value = allProducts;
   } catch (error) {
     console.error(error);
-  } finally {
-    loading.value = false;
   }
+};
+
+onMounted(async () => {
+  loading.value = true;
+  await fetchProducts();
+  loading.value = false;
 });
+
+const handleRefresh = async (event: any) => {
+  await fetchProducts();
+  event.target.complete();
+};
 
 const addToCart = async (product: any) => {
   cart.addItem(product);
@@ -197,12 +209,13 @@ ion-content {
 }
 
 .product-item {
-  background: var(--ion-card-background, #fff);
-  border-radius: 15px;
-  padding: 15px;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  background: var(--app-card-bg, #ffffff);
+  border-radius: 12px;
+  margin-bottom: 15px;
+  padding: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .product-image {
@@ -220,22 +233,16 @@ ion-content {
 }
 
 .product-title {
-  font-weight: 700;
-  color: var(--ion-text-color, #333);
   font-size: 1rem;
-  margin-bottom: 3px;
-}
-
-.product-meta {
-  font-size: 0.8rem;
-  color: var(--ion-color-step-400, #888);
+  font-weight: 600;
   margin-bottom: 5px;
+  color: var(--ion-text-color, #000);
 }
 
 .product-price {
-  font-weight: 800;
-  color: #ff4757;
   font-size: 1.1rem;
+  font-weight: bold;
+  color: #ff4757;
 }
 
 .add-btn-wrapper {
@@ -243,19 +250,18 @@ ion-content {
 }
 
 .add-button {
-  background: #ff4757;
-  color: #fff;
+  background: var(--ion-color-primary, #04644c);
+  color: white;
   border: none;
   border-radius: 50%;
   width: 40px;
   height: 40px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  box-shadow: 0 3px 8px rgba(255, 71, 87, 0.3);
+  align-items: center;
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: transform 0.1s;
+  box-shadow: 0 2px 8px rgba(4, 100, 76, 0.3);
 }
 
 .add-button:active {
@@ -264,44 +270,46 @@ ion-content {
 
 /* Modal Styles */
 .modal-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
-  padding-bottom: 30px;
+  padding: 20px 0;
 }
+
 .modal-image-container {
-  width: 100%;
-  max-width: 250px;
-  height: 250px;
-  margin: 0 auto 20px;
-  border-radius: 20px;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 20px auto;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  background: var(--app-card-bg, #ffffff);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
+
 .modal-image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .modal-title {
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--ion-text-color, #333);
   margin-bottom: 10px;
 }
+
 .modal-desc {
+  color: var(--ion-color-medium, #888888);
+  margin-bottom: 20px;
   font-size: 0.95rem;
-  color: var(--ion-color-medium, #666);
-  margin-bottom: 15px;
-  line-height: 1.4;
 }
+
 .modal-price {
   font-size: 1.4rem;
   font-weight: 800;
   color: #ff4757;
   margin-bottom: 25px;
 }
+
 .qty-selector {
   display: flex;
   align-items: center;
@@ -311,11 +319,13 @@ ion-content {
   padding: 5px 15px;
   margin-bottom: 25px;
 }
+
 .qty-btn {
   --padding-start: 10px;
   --padding-end: 10px;
   font-size: 1.2rem;
 }
+
 .qty-display {
   font-size: 1.2rem;
   font-weight: 700;

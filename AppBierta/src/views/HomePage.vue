@@ -1,6 +1,9 @@
 <template>
   <ion-page>
     <ion-content class="home-content">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <!-- Dark Header Section -->
       <div class="dark-header">
         <div class="header-top">
@@ -28,7 +31,7 @@
 
       <!-- Top Banner -->
       <div class="top-banner-container">
-        <img src="/assets/images/banner1.jpg" class="promotional-banner" alt="Banner 1" />
+        <img src="/assets/images/bannerlogo.png" class="promotional-banner" alt="Banner 1" />
       </div>
 
       <!-- Hero Banner (Optional, makes it look more complete) -->
@@ -77,7 +80,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import { cartOutline, chevronDownOutline, searchOutline, beerOutline, cubeOutline, waterOutline, archiveOutline, star, chevronForwardOutline } from 'ionicons/icons';
 import { cartState } from '../store/cart';
 import { useRouter } from 'vue-router';
@@ -89,7 +92,7 @@ const searchQuery = ref('');
 const defaultLocation = ref<any>(null);
 const categories = ref<any[]>([]);
 
-onMounted(async () => {
+const fetchLocations = async () => {
   try {
     const locRes = await axios.get('/api/locations');
     if (locRes.data && locRes.data.length > 0) {
@@ -98,14 +101,27 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error fetching locations', error);
   }
+};
 
+const fetchCategories = async () => {
   try {
     const catRes = await axios.get('/api/categories');
     categories.value = catRes.data;
   } catch (error) {
     console.error('Error fetching categories', error);
   }
+};
+
+onMounted(async () => {
+  await fetchLocations();
+  await fetchCategories();
 });
+
+const handleRefresh = async (event: any) => {
+  await fetchLocations();
+  await fetchCategories();
+  event.target.complete();
+};
 
 const getCategoryIcon = (name: string) => {
   const n = name.toLowerCase();
@@ -144,17 +160,15 @@ const goToRewards = () => {
 
 <style scoped>
 .home-content {
-  --background: var(--ion-color-step-50, #f4f5f8);
+  --background: var(--ion-background-color, #f7f9fc);
 }
 
 .dark-header {
-  background-color: #121212; /* Dark color as requested */
-  padding: 15px 20px;
-  padding-top: 20px;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  position: relative;
-  z-index: 10;
+  background: #04644c;
+  padding: 50px 20px 20px 20px; /* Extra top padding for mobile status bar area */
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  box-shadow: 0 10px 20px rgba(4, 100, 76, 0.2);
 }
 
 .header-top {
@@ -166,93 +180,96 @@ const goToRewards = () => {
 
 .location-selector {
   color: #fff;
-  display: flex;
-  align-items: center;
   cursor: pointer;
 }
 
 .loc-text {
   display: flex;
   align-items: center;
-  gap: 5px;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .loc-value {
-  font-weight: 700;
-  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .chevron-icon {
+  margin-left: 5px;
   font-size: 1.2rem;
 }
 
 .cart-btn {
-  color: #fff;
-  --padding-end: 0;
-  --padding-start: 0;
+  --color: #fff;
   position: relative;
+  overflow: visible;
+}
+
+.cart-btn ion-icon {
+  font-size: 1.8rem;
 }
 
 .cart-badge {
   position: absolute;
-  top: 0;
-  right: -5px;
-  background: #ff4757;
+  top: 5px;
+  right: 5px;
+  background: #000;
   color: #fff;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
   font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-weight: bold;
+  border-radius: 10px;
+  padding: 2px 6px;
+  border: 2px solid #04644c;
 }
 
 .search-bar-container {
-  width: 100%;
+  margin-top: 10px;
 }
 
 .search-input-wrapper {
-  background: #fff;
-  border-radius: 30px;
   display: flex;
   align-items: center;
+  background: var(--app-card-bg, #ffffff);
+  border-radius: 25px;
   padding: 5px 15px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .search-input {
-  flex: 1;
   border: none;
-  background: transparent;
-  padding: 10px 5px;
-  font-size: 0.95rem;
-  color: #333;
   outline: none;
+  flex: 1;
+  padding: 10px;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--ion-text-color, #333);
 }
 
 .search-icon {
-  color: #ff4757; /* Accent color like Pedidos Ya */
+  color: #04644c;
   font-size: 1.4rem;
-  background: #ffeeef;
+  background: rgba(4, 100, 76, 0.1);
   padding: 5px;
   border-radius: 50%;
 }
 
 .hero-banner {
   margin: 20px;
-  background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
-  border-radius: 15px;
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  border-radius: 20px;
   padding: 20px;
   color: #fff;
-  box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .hero-content h3 {
   margin: 0;
   font-weight: 800;
   font-size: 1.3rem;
+  color: #fff;
 }
 
 .hero-content p {
@@ -263,11 +280,11 @@ const goToRewards = () => {
 
 .rewards-banner {
   margin: 0 20px 20px 20px;
-  background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
-  border-radius: 15px;
+  background: linear-gradient(135deg, #04644c 0%, #1d745e 100%);
+  border-radius: 20px;
   padding: 15px;
   color: #fff;
-  box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3);
+  box-shadow: 0 8px 20px rgba(4, 100, 76, 0.2);
   cursor: pointer;
 }
 
@@ -279,6 +296,7 @@ const goToRewards = () => {
 .rewards-icon {
   font-size: 2.5rem;
   margin-right: 15px;
+  color: #fff;
 }
 
 .rewards-text {
@@ -306,19 +324,19 @@ const goToRewards = () => {
 }
 
 .category-card {
-  background: var(--ion-card-background, #fff);
-  border-radius: 15px;
+  background: var(--app-card-bg, #ffffff);
+  border-radius: 20px;
   padding: 20px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
   margin-bottom: 5px;
   cursor: pointer;
   height: 120px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid rgba(0,0,0,0.02);
+  border: 1px solid var(--ion-color-step-100, rgba(0,0,0,0.02));
 }
 
 .category-card:active {
@@ -331,11 +349,11 @@ const goToRewards = () => {
   justify-content: flex-start;
   padding: 15px 25px;
   gap: 20px;
-  background: linear-gradient(135deg, #2b2b2b 0%, #1a1a1a 100%);
+  background: var(--ion-color-secondary, #000000);
 }
 
 .category-card-wide .cat-name {
-  color: #fff;
+  color: var(--ion-color-secondary-contrast, #fff);
   font-size: 1.2rem;
 }
 
@@ -360,22 +378,23 @@ const goToRewards = () => {
 .category-card-wide .cat-icon {
   margin-bottom: 0;
   font-size: 3.5rem;
+  color: var(--ion-color-secondary-contrast, #fff);
 }
 
 .icon-silver {
-  color: #a0a0a0;
+  color: var(--ion-text-color, #888);
 }
 
 .icon-amber {
-  color: #ff9800;
+  color: var(--ion-color-primary, #04644c);
 }
 
 .icon-red {
-  color: #ff4757;
+  color: var(--ion-color-secondary-contrast, #fff); /* changed from black for contrast */
 }
 
 .icon-default {
-  color: #555;
+  color: #04644c;
 }
 
 .top-banner-container,
@@ -385,8 +404,8 @@ const goToRewards = () => {
 
 .promotional-banner {
   width: 100%;
-  border-radius: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-radius: 20px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
   object-fit: cover;
   display: block;
 }

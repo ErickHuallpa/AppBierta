@@ -53,8 +53,8 @@ const isEditing = ref(false);
 const editId = ref<number | null>(null);
 
 onIonViewDidEnter(async () => {
-  // Configuración inicial del mapa
-  map = L.map('map').setView([-19.03332, -65.26274], 13);
+  // Configuración inicial del mapa (Potosí - Bolivia)
+  map = L.map('map').setView([-19.5893, -65.7535], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'

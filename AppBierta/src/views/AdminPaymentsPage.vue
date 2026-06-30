@@ -1,17 +1,19 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="tertiary">
-
-        <ion-title>Validar Pagos</ion-title>
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: #04644c; color: #ffffff;">
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/tabs/profile" color="light" text=""></ion-back-button>
+        </ion-buttons>
+        <ion-title style="font-weight: 600;">Validar Pagos</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" style="--background: #f7f9fc;">
       <ion-list>
-        <ion-item v-for="order in pendingOrders" :key="order.id">
+        <ion-item v-for="order in pendingOrders" :key="order.id" class="payment-item" lines="none">
           <ion-label>
-            <h2>Pedido #{{ order.id }} - {{ order.user?.email }}</h2>
-            <p>Monto: {{ order.total_amount }} Bs.</p>
+            <h2 style="font-weight: 600; color: #04644c;">Pedido #{{ order.id }} - {{ order.user?.email }}</h2>
+            <p style="color: #666;">Monto: {{ order.total_amount }} Bs.</p>
             <p>Método: {{ order.payment_method === 'qr' ? 'QR' : 'Efectivo' }}</p>
             <p v-if="order.payment_method === 'qr' && order.payment_receipt">
               <ion-button fill="outline" size="small" @click="viewReceipt(order.payment_receipt)">Ver Comprobante</ion-button>
@@ -29,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, onIonViewWillEnter, toastController } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, onIonViewWillEnter, toastController } from '@ionic/vue';
 import { ref } from 'vue';
 import axios from 'axios';
 
@@ -68,3 +70,16 @@ onIonViewWillEnter(() => {
   fetchPending();
 });
 </script>
+
+<style scoped>
+.payment-item {
+  --background: #ffffff;
+  --border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  --padding-start: 15px;
+  --inner-padding-end: 15px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+}
+</style>

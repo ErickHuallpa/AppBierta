@@ -35,8 +35,6 @@ class DatabaseSeeder extends Seeder
         // 2. Crear Productos (Cervezas)
         \App\Models\Product::create([
             'name' => 'Paceña Lata 354ml (Pack de 6)',
-            'presentation' => 'lata',
-            'precio_compra' => 45.00,
             'precio_venta' => 60.00,
             'stock' => 100,
             'points_reward' => 100,
@@ -46,8 +44,6 @@ class DatabaseSeeder extends Seeder
 
         \App\Models\Product::create([
             'name' => 'Huari Botella 620ml (Caja de 12)',
-            'presentation' => 'botella',
-            'precio_compra' => 130.00,
             'precio_venta' => 160.00,
             'stock' => 50,
             'points_reward' => 250,
@@ -56,14 +52,17 @@ class DatabaseSeeder extends Seeder
         ]);
 
         \App\Models\Product::create([
-            'name' => 'Taquiña Botella 620ml',
-            'presentation' => 'botella',
-            'precio_compra' => 10.00,
-            'precio_venta' => 15.00,
-            'stock' => 200,
-            'points_reward' => 15,
-            'points_cost' => 250,
-            'max_quota_per_user' => 24
+            'name' => 'Taquiña Export 330ml (Pack de 6)',
+            'precio_venta' => 55.00,
+            'stock' => 120,
+            'points_reward' => 80,
+            'points_cost' => 1200,
+            'max_quota_per_user' => 3
+        ]);
+
+        $this->call([
+            AdminSeeder::class,
+            TempSeeder::class
         ]);
     }
 }

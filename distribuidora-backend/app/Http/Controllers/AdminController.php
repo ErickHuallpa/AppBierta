@@ -274,6 +274,7 @@ class AdminController extends Controller
                 'product_batches.purchase_price as precio_compra',
                 'orders.payment_method as metodo_pago',
                 'orders.order_type as tipo_pedido',
+                'orders.delivery_cost as delivery_cost',
                 \DB::raw("CONCAT(COALESCE(delivery_persona.nombre,''), ' ', COALESCE(delivery_persona.apellidos,'')) as empleado_delivery")
             )
             ->orderBy('orders.created_at', 'asc')

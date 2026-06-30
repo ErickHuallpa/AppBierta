@@ -1,15 +1,18 @@
 <template>
   <ion-page>
     <ion-header class="ion-no-border">
-      <ion-toolbar style="--background: var(--ion-background-color, #121212);">
+      <ion-toolbar style="--background: #04644c; --color: #ffffff;">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/tabs/home" text=""></ion-back-button>
+          <ion-back-button default-href="/tabs/home" text="" color="light"></ion-back-button>
         </ion-buttons>
         <ion-title class="ion-text-center" style="font-weight: 600;">Carrito</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="cart-content" color="light">
+    <ion-content class="cart-content" style="--background: var(--ion-background-color, #f7f9fc);">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <div v-if="cart.items.length === 0" class="empty-state">
         <ion-icon :icon="cartOutline" class="empty-icon"></ion-icon>
         <p>Tu carrito está vacío</p>
@@ -40,7 +43,7 @@
               </div>
             </div>
             <div class="product-price">
-              <span v-if="item.is_reward" style="color: #f1c40f;">{{ item.points_cost * item.quantity }} pts</span>
+              <span v-if="item.is_reward" style="color: #f1c40f;">{{ (item.points_cost || 0) * item.quantity }} pts</span>
               <span v-else>Bs. {{ (item.price * item.quantity).toFixed(2) }}</span>
             </div>
           </div>
@@ -62,8 +65,8 @@
           <div class="section-subtitle">Selecciona tu tipo de compra</div>
           <ion-radio-group v-model="cart.checkout.order_type">
             <ion-item lines="none" class="no-bg-item radio-item">
-              <ion-radio slot="start" value="delivery" color="danger"></ion-radio>
-              <ion-label>Delivery</ion-label>
+              <ion-radio slot="start" value="delivery" color="danger" :disabled="hasNoLocations"></ion-radio>
+              <ion-label :color="hasNoLocations ? 'medium' : ''">Delivery <span v-if="hasNoLocations" style="font-size: 0.8em;">(Sin ubicación)</span></ion-label>
             </ion-item>
             <ion-item lines="none" class="no-bg-item radio-item">
               <ion-radio slot="start" value="pickup" color="danger"></ion-radio>
@@ -126,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonTextarea, IonRadioGroup, IonRadio, IonItem, IonLabel, IonSelect, IonSelectOption } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonTextarea, IonRadioGroup, IonRadio, IonItem, IonLabel, IonSelect, IonSelectOption, alertController, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import { cartOutline, trashOutline, addOutline, removeOutline, timeOutline } from 'ionicons/icons';
 import { cartState } from '../store/cart';
 import { useRouter } from 'vue-router';
@@ -137,23 +140,58 @@ const cart = cartState;
 const router = useRouter();
 
 const enforceTimeLimit = ref(true);
-
-onMounted(async () => {
-  try {
-    const res = await axios.get('/api/settings/time-limit');
-    enforceTimeLimit.value = res.data.enforce_time_limit;
-  } catch (e) {
-    console.error('Failed to fetch time limit settings', e);
-  }
-});
+const hasNoLocations = ref(false);
 
 const isPastCutoff = computed(() => {
   const hour = new Date().getHours();
   return enforceTimeLimit.value && hour >= 16;
 });
 
-const goToCheckout = () => {
+const loadSettingsAndLocations = async () => {
+  try {
+    const resSettings = await axios.get('/api/settings/time-limit');
+    enforceTimeLimit.value = resSettings.data.enforce_time_limit;
+  } catch (e) {}
+
+  try {
+    const resLoc = await axios.get('/api/locations');
+    hasNoLocations.value = resLoc.data.length === 0;
+    if (hasNoLocations.value && cart.checkout.order_type === 'delivery') {
+      cart.checkout.order_type = 'pickup';
+    }
+  } catch (e) {}
+};
+
+const handleRefresh = async (event: any) => {
+  await loadSettingsAndLocations();
+  event.target.complete();
+};
+
+onMounted(() => {
+  loadSettingsAndLocations();
+});
+
+const goToCheckout = async () => {
   if (isPastCutoff.value) return;
+  
+  // Registrar el "intento" para bloquear la cuota según requerimiento
+  try {
+    for (const item of cart.items) {
+      if (!item.is_reward) {
+        await axios.post('/api/orders/attempt', { product_id: item.product_id });
+      }
+    }
+  } catch (e: any) {
+    const msg = e.response?.data?.error || 'Error de conexión o cuota excedida.';
+    const alert = await alertController.create({
+      header: 'Atención',
+      message: msg,
+      buttons: ['OK']
+    });
+    await alert.present();
+    return; // Stop navigation if attempt fails (e.g. they already attempted)
+  }
+
   router.push('/checkout');
 };
 </script>
@@ -182,11 +220,11 @@ ion-content {
 }
 
 .card-box {
-  background: var(--ion-card-background, #ffffff);
+  background: var(--app-card-bg, #ffffff);
   border-radius: 12px;
   padding: 15px;
   margin-bottom: 15px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .product-header {
@@ -246,7 +284,7 @@ ion-content {
 }
 
 .add-btn {
-  color: #ff4757;
+  color: #04644c;
 }
 
 .qty-value {
@@ -349,7 +387,7 @@ ion-content {
   left: 0;
   width: 100%;
   padding: 15px;
-  background: var(--ion-background-color, #f4f5f8);
+  background: var(--ion-background-color, #f7f9fc);
   z-index: 1000;
 }
 
@@ -358,18 +396,18 @@ ion-content {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  background: #1a1e29;
+  background: #000000;
   color: #fff;
   border: none;
   border-radius: 30px;
   padding: 12px 20px;
   font-size: 1.1rem;
   font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .cart-badge {
-  background: #ff4757;
+  background: #04644c;
   color: #fff;
   width: 28px;
   height: 28px;
@@ -381,6 +419,6 @@ ion-content {
 }
 
 .btn-price {
-  color: #ffcc00; /* Yellowish color as in dinki */
+  color: #ffffff; /* White color */
 }
 </style>
