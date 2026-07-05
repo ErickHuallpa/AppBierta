@@ -54,6 +54,11 @@
             <ion-label>Aprobación de Pagos</ion-label>
           </ion-item>
           
+          <ion-item button :detail="true" lines="none" class="no-bg-item" @click="router.push('/tabs/admin/pickup-orders')">
+            <ion-icon :icon="storefrontOutline" slot="start" color="primary"></ion-icon>
+            <ion-label>Entregar Pedidos (Recojo)</ion-label>
+          </ion-item>
+          
           <ion-item button :detail="true" lines="none" class="no-bg-item" @click="router.push('/tabs/admin/staff')" v-if="authState.isAdmin">
             <ion-icon :icon="peopleOutline" slot="start" color="tertiary"></ion-icon>
             <ion-label>Gestión de Personal</ion-label>
@@ -71,7 +76,7 @@
           </ion-item>
         </div>
 
-        <div class="card-box" v-if="authState.isDelivery" style="margin-top:20px;">
+        <div class="card-box" v-if="authState.isDelivery || authState.isAdmin" style="margin-top:20px;">
           <div class="section-title">Panel de Repartidor</div>
           <ion-item button :detail="true" lines="none" class="no-bg-item" @click="router.push('/tabs/delivery')">
             <ion-icon :icon="bicycleOutline" slot="start" color="primary"></ion-icon>
@@ -161,7 +166,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel, IonIcon, IonToggle, IonButton, IonModal, IonInput, IonSpinner, IonButtons, toastController, IonRefresher, IonRefresherContent, IonBadge } from '@ionic/vue';
-import { personCircleOutline, logOutOutline, createOutline, lockClosedOutline, moonOutline, cubeOutline, cashOutline, peopleOutline, pieChartOutline, bicycleOutline, timeOutline, cartOutline } from 'ionicons/icons';
+import { personCircleOutline, logOutOutline, createOutline, lockClosedOutline, moonOutline, cubeOutline, cashOutline, peopleOutline, pieChartOutline, bicycleOutline, timeOutline, cartOutline, storefrontOutline } from 'ionicons/icons';
 import { authState } from '../store/auth';
 import { useRouter } from 'vue-router';
 import axios from 'axios';

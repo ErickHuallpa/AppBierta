@@ -36,12 +36,24 @@
           <img :src="product.image_url || `https://placehold.co/150x150/eeeeee/333333?text=${product.name}`" class="product-image" />
           
           <div class="product-info">
-            <div class="product-title">{{ product.name }}</div>
-            <div class="product-price">Bs. {{ product.precio_venta }}</div>
+            <div class="product-title">
+              {{ product.name }}
+              <ion-badge color="danger" v-if="product.promotional_stock > 0" style="margin-left: 5px; font-size: 0.6em; vertical-align: middle;">🔥 20% OFF (Quedan {{ product.promotional_stock }})</ion-badge>
+            </div>
+            <div class="product-packages-preview">
+              <div v-for="pkg in getPackagesFor(product.id)" :key="pkg.id" style="font-size: 0.85em; color: var(--ion-color-medium); margin-top: 2px;">
+                {{ pkg.name.split(' ')[0] }}: 
+                <span v-if="pkg.promotional_price">
+                  <span style="text-decoration: line-through; color: #999;">Bs. {{ pkg.precio_venta }}</span> 
+                  <strong style="color: var(--ion-color-danger)">Bs. {{ pkg.promotional_price.toFixed(2) }}</strong>
+                </span>
+                <strong v-else style="color: var(--ion-color-danger)">Bs. {{ pkg.precio_venta }}</strong>
+              </div>
+            </div>
           </div>
 
           <div class="add-btn-wrapper">
-            <button class="add-button" @click.stop="addToCart(product)">
+            <button class="add-button" @click.stop="openProductModal(product)">
               <ion-icon :icon="addOutline"></ion-icon>
             </button>
           </div>
@@ -56,22 +68,45 @@
               <img :src="selectedProduct.image_url || `https://placehold.co/300x300/eeeeee/333333?text=${selectedProduct.name}`" />
             </div>
             <h2 class="modal-title">{{ selectedProduct.name }}</h2>
-            <p class="modal-desc">{{ selectedProduct.description || 'Sin descripción disponible.' }}</p>
-            <h3 class="modal-price">Bs. {{ selectedProduct.precio_venta }}</h3>
+            <p class="modal-desc" v-if="selectedProduct.promotional_stock > 0">
+              <ion-badge color="danger" style="font-size: 0.9em; padding: 5px 10px;">🔥 {{ selectedProduct.promotional_stock }} unidades en oferta de 20%</ion-badge>
+            </p>
+            <p class="modal-desc" v-else>{{ selectedProduct.description || 'Sin descripción disponible.' }}</p>
             
-            <div class="qty-selector">
-              <ion-button fill="clear" color="dark" @click="selectedQty > 1 ? selectedQty-- : null" class="qty-btn">
-                <ion-icon :icon="removeOutline"></ion-icon>
-              </ion-button>
-              <span class="qty-display">{{ selectedQty }}</span>
-              <ion-button fill="clear" color="dark" @click="selectedQty++" class="qty-btn">
-                <ion-icon :icon="addOutline"></ion-icon>
+            <div v-if="availablePackages.length > 0">
+              <ion-list lines="full">
+                <ion-item v-for="pkg in availablePackages" :key="pkg.id">
+                  <ion-label>
+                    <h3 style="font-weight: 600;">{{ pkg.name }}</h3>
+                    <p v-if="pkg.promotional_price" style="color: var(--ion-color-danger); font-weight: bold;">
+                      <span style="text-decoration: line-through; color: var(--ion-color-medium); font-size: 0.85em; margin-right: 5px;">Bs. {{ pkg.precio_venta }}</span>
+                      Bs. {{ pkg.promotional_price.toFixed(2) }}
+                    </p>
+                    <p v-else style="color: var(--ion-color-danger); font-weight: bold;">Bs. {{ pkg.precio_venta }}</p>
+                    <div style="font-size: 0.85em; color: var(--ion-color-medium); margin-top: 5px;">Disponibles: <strong>{{ getMaxQtyFor(pkg) }}</strong> paquetes</div>
+                  </ion-label>
+                  <div slot="end" style="display: flex; align-items: center; gap: 5px; background: var(--ion-color-light); border-radius: 20px; padding: 2px;">
+                    <ion-button fill="clear" color="dark" @click="pkg.qty > 0 ? pkg.qty-- : null" :disabled="pkg.qty === 0" style="--padding-start: 5px; --padding-end: 5px; height: 30px;">
+                      <ion-icon :icon="removeOutline"></ion-icon>
+                    </ion-button>
+                    <span style="font-weight: bold; font-size: 1.1em; min-width: 20px; text-align: center;">{{ pkg.qty }}</span>
+                    <ion-button fill="clear" color="dark" @click="pkg.qty < getMaxQtyFor(pkg) ? pkg.qty++ : null" :disabled="pkg.qty >= getMaxQtyFor(pkg)" style="--padding-start: 5px; --padding-end: 5px; height: 30px;">
+                      <ion-icon :icon="addOutline"></ion-icon>
+                    </ion-button>
+                  </div>
+                </ion-item>
+              </ion-list>
+
+              <ion-button expand="block" shape="round" color="danger" class="add-to-cart-btn" @click="confirmAddToCart" :disabled="totalSelectedQty === 0" style="margin-top: 20px;">
+                <span v-if="totalSelectedQty > 0">Agregar {{ totalSelectedQty }} al Carrito - Bs. {{ totalSelectedPrice.toFixed(2) }}</span>
+                <span v-else>Selecciona al menos 1</span>
               </ion-button>
             </div>
-            
-            <ion-button expand="block" shape="round" color="danger" class="add-to-cart-btn" @click="confirmAddToCart">
-              Agregar {{ selectedQty }} al Carrito - Bs. {{ (selectedProduct.precio_venta * selectedQty).toFixed(2) }}
-            </ion-button>
+            <div v-else>
+              <p style="text-align: center; color: var(--ion-color-danger); margin-top: 20px; font-weight: 600;">
+                No hay presentaciones en paquete disponibles para este producto.
+              </p>
+            </div>
           </div>
         </ion-content>
       </ion-modal>
@@ -82,33 +117,52 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonBadge, IonSpinner, IonModal, toastController, IonRefresher, IonRefresherContent } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonButton, IonIcon, IonBadge, IonSpinner, IonModal, toastController, IonRefresher, IonRefresherContent, IonList, IonRadioGroup, IonRadio, IonItem, IonLabel } from '@ionic/vue';
 import { cartOutline, searchOutline, addOutline, removeOutline } from 'ionicons/icons';
 import axios from 'axios';
 import { cartState } from '../store/cart';
 
 const route = useRoute();
 const cart = cartState;
+const allProducts = ref<any[]>([]);
 const products = ref<any[]>([]);
 const loading = ref(true);
 const categoryName = ref('Productos');
 
 const isModalOpen = ref(false);
 const selectedProduct = ref<any>(null);
-const selectedQty = ref(1);
+const availablePackages = ref<any[]>([]);
+
+const totalSelectedQty = computed(() => availablePackages.value.reduce((acc, p) => acc + p.qty, 0));
+const totalSelectedPrice = computed(() => availablePackages.value.reduce((acc, p) => acc + (p.qty * (p.promotional_price || p.precio_venta)), 0));
+const totalBaseUnitsSelected = computed(() => availablePackages.value.reduce((acc, pkg) => acc + (pkg.qty * (pkg.package_multiplier || 1)), 0));
+
+const getMaxQtyFor = (pkg: any) => {
+  if (!selectedProduct.value) return 0;
+  const otherPackagesBaseUnits = totalBaseUnitsSelected.value - (pkg.qty * (pkg.package_multiplier || 1));
+  const remainingBaseUnits = selectedProduct.value.real_stock - otherPackagesBaseUnits;
+  return Math.floor(remainingBaseUnits / (pkg.package_multiplier || 1));
+};
+
+const getPackagesFor = (productId: number) => {
+  return allProducts.value.filter((p: any) => p.parent_id === productId);
+};
 
 const openProductModal = (product: any) => {
   selectedProduct.value = product;
-  selectedQty.value = 1;
+  availablePackages.value = allProducts.value.filter((p: any) => p.parent_id === product.id).map(p => ({...p, qty: 0}));
   isModalOpen.value = true;
 };
 
 const confirmAddToCart = async () => {
-  if (selectedProduct.value) {
-    cart.addItems(selectedProduct.value, selectedQty.value);
+  const selected = availablePackages.value.filter(p => p.qty > 0);
+  if (selected.length > 0) {
+    for (const pkg of selected) {
+      cart.addItems(pkg, pkg.qty);
+    }
     isModalOpen.value = false;
     const t = await toastController.create({
-      message: `${selectedQty.value}x añadido al carrito`,
+      message: `Productos añadidos al carrito`,
       duration: 1500,
       color: 'dark',
       position: 'top'
@@ -129,15 +183,18 @@ const pageTitle = computed(() => {
 const fetchProducts = async () => {
   try {
     const res = await axios.get('/api/products');
-    let allProducts = res.data;
+    allProducts.value = res.data;
+    
+    // Only show base products in the catalog
+    let baseProducts = allProducts.value.filter((p: any) => p.parent_id === null);
     
     // Simulate filtering (in a real app, backend handles this via query params)
     if (queryParam) {
-      allProducts = allProducts.filter((p: any) => p.name.toLowerCase().includes(queryParam.toLowerCase()));
+      baseProducts = baseProducts.filter((p: any) => p.name.toLowerCase().includes(queryParam.toLowerCase()));
     } else if (categoryId !== 'all') {
-      allProducts = allProducts.filter((p: any) => p.category_id == categoryId);
-      if (allProducts.length > 0) {
-        categoryName.value = allProducts[0].category?.name || 'Categoría';
+      baseProducts = baseProducts.filter((p: any) => p.category_id == categoryId);
+      if (baseProducts.length > 0) {
+        categoryName.value = baseProducts[0].category?.name || 'Categoría';
       } else {
         // Fetch category name if empty
         const catRes = await axios.get('/api/categories');
@@ -146,7 +203,7 @@ const fetchProducts = async () => {
       }
     }
     
-    products.value = allProducts;
+    products.value = baseProducts;
   } catch (error) {
     console.error(error);
   }
@@ -164,6 +221,17 @@ const handleRefresh = async (event: any) => {
 };
 
 const addToCart = async (product: any) => {
+  const existing = cart.items.find((i: any) => i.product_id === product.id && !i.is_reward);
+  if (existing && (existing.quantity >= 5 || existing.quantity >= product.real_stock)) {
+    const t = await toastController.create({
+      message: 'Error: Se ha alcanzado la cuota máxima de 5 unidades por lote para este cliente.',
+      duration: 3000,
+      color: 'danger',
+      position: 'top'
+    });
+    t.present();
+    return;
+  }
   cart.addItem(product);
   const t = await toastController.create({
     message: 'Añadido al carrito',

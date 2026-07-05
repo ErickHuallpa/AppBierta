@@ -75,10 +75,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonItem, IonSelect, IonSelectOption, IonInput, IonSpinner, alertController, toastController } from '@ionic/vue';
+import { ref, computed } from 'vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonItem, IonSelect, IonSelectOption, IonInput, IonSpinner, alertController, toastController, onIonViewWillEnter } from '@ionic/vue';
 import { cartState } from '../store/cart';
-import { useRouter } from 'vue-router';
+import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import axios from 'axios';
 
 const cart = cartState;
@@ -87,15 +87,39 @@ const locations = ref<any[]>([]);
 const isSubmitting = ref(false);
 const qrReceipt = ref<File | null>(null);
 
+let bypassWarning = false;
+
 const finalTotal = computed(() => {
   return cart.totalPrice; // El backend sumará el envío si corresponde
 });
 
-onMounted(async () => {
+onIonViewWillEnter(async () => {
+  bypassWarning = false;
   if (cart.items.length === 0) {
+    bypassWarning = true;
     router.replace('/tabs/cart');
     return;
   }
+  
+  try {
+    for (const item of cart.items) {
+      if (!item.is_reward) {
+        await axios.post('/api/orders/attempt', { product_id: item.product_id });
+      }
+    }
+  } catch (e: any) {
+    bypassWarning = true;
+    const msg = e.response?.data?.error || 'Error de conexión o cuota excedida.';
+    const alert = await alertController.create({
+      header: 'Atención',
+      message: msg,
+      buttons: ['OK']
+    });
+    await alert.present();
+    router.replace('/tabs/cart');
+    return;
+  }
+
   try {
     const res = await axios.get('/api/locations');
     locations.value = res.data;
@@ -113,6 +137,22 @@ onMounted(async () => {
     if (!cart.checkout.nit) cart.checkout.nit = user.persona.ci_nit || '';
     if (!cart.checkout.razon_social) cart.checkout.razon_social = user.persona.razon_social || '';
   }
+});
+
+onBeforeRouteLeave((to, from, next) => {
+  if (bypassWarning) {
+    next();
+    return;
+  }
+  
+  alertController.create({
+    header: 'Advertencia',
+    message: 'Si regresas ahora, perderás tu intento y deberás esperar 30 minutos para volver a comprar estos productos. ¿Deseas salir de todas formas?',
+    buttons: [
+      { text: 'Me quedo', role: 'cancel', handler: () => next(false) },
+      { text: 'Sí, salir', handler: () => next() }
+    ]
+  }).then(a => a.present());
 });
 
 const onFileSelected = (event: any) => {
@@ -206,7 +246,8 @@ const orderSuccess = async () => {
   isSubmitting.value = false;
   await showToast('¡Pedido enviado exitosamente!', 'success');
   cart.clearCart();
-  router.replace('/tabs/home');
+  bypassWarning = true;
+  router.replace('/tabs/orders');
 };
 </script>
 

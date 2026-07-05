@@ -100,6 +100,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/AdminReportsPage.vue'),
         meta: { requiresAuth: true, role: 'admin' }
       },
+      {
+        path: 'admin/pickup-orders',
+        name: 'AdminPickupOrders',
+        component: () => import('@/views/AdminPickupOrdersPage.vue'),
+        meta: { requiresAuth: true, role: 'staff' }
+      },
 
       {
         path: 'delivery',
@@ -218,7 +224,7 @@ router.beforeEach((to, from, next) => {
       next('/tabs/home');
     } else if (role === 'staff' && (authState.isClient || authState.isDelivery)) {
       next('/tabs/home');
-    } else if (role === 'delivery' && !authState.isDelivery) {
+    } else if (role === 'delivery' && !(authState.isDelivery || authState.isAdmin)) {
       next('/tabs/home');
     } else {
       next();

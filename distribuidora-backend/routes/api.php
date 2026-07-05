@@ -88,6 +88,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/suppliers/{id}', [\App\Http\Controllers\AdminController::class, 'deleteSupplier']);
     Route::post('/batches', [\App\Http\Controllers\AdminController::class, 'addBatch']);
     Route::get('/batches/expiring', [\App\Http\Controllers\AdminController::class, 'getExpiringBatches']);
+    Route::get('/admin/dashboard', [\App\Http\Controllers\AdminController::class, 'dashboard']);
+    Route::get('/admin/pickup-orders', [\App\Http\Controllers\AdminController::class, 'pickupOrders']);
+    Route::post('/admin/orders/{id}/deliver', [\App\Http\Controllers\AdminController::class, 'markDelivered']);
+    
+    // Rutas de Control de Lotes (Batches)
     Route::put('/batches/{id}/status', [\App\Http\Controllers\AdminController::class, 'updateBatchStatus']);
     Route::get('/reports', [\App\Http\Controllers\AdminController::class, 'getReports']);
 

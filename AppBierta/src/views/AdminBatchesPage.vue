@@ -93,25 +93,15 @@ const markAsExpired = async (id: number) => {
 const openDiscountModal = async (batch: any) => {
   const alert = await alertController.create({
     header: 'Aplicar Promoción',
-    message: 'Ingresa el nuevo precio rebajado para este lote próximo a vencer:',
-    inputs: [
-      {
-        name: 'price',
-        type: 'number',
-        placeholder: 'Ej: 10.50',
-        min: 0
-      }
-    ],
+    message: '¿Aplicar un 20% de descuento automático a este lote por estar próximo a vencer?',
     buttons: [
       { text: 'Cancelar', role: 'cancel' },
       { 
-        text: 'Guardar', 
-        handler: async (data) => {
-          if (!data.price) return false;
+        text: 'Aplicar 20%', 
+        handler: async () => {
           try {
             await axios.put(`/api/batches/${batch.id}/status`, { 
-              status: 'promotion', 
-              discount_price: data.price 
+              status: 'promotion'
             });
             loadBatches();
             const toast = await toastController.create({ message: 'Promoción aplicada', duration: 2000, color: 'success' });

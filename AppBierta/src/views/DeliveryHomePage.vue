@@ -5,7 +5,10 @@
         <ion-title style="font-weight: 600;">Zona Delivery</ion-title>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding" style="--background: #f7f9fc;">
+    <ion-content class="ion-padding" style="--background: var(--ion-background-color, #f7f9fc);">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
       <div class="ion-padding">
         <ion-segment v-model="segment">
           <ion-segment-button value="available">
@@ -18,48 +21,59 @@
       </div>
 
       <div v-if="segment === 'available'">
-        <ion-list class="items-list">
-          <ion-item v-for="order in availableOrders" :key="order.id" class="ion-margin-bottom order-item" button @click="openDetails(order)" lines="none">
-            <ion-label>
-              <h2 style="font-weight: 600;">Pedido #{{ order.id }}</h2>
-              <p v-if="order.distance" style="color: var(--ion-color-primary); font-weight: 600;">
-                <ion-icon :icon="navigateOutline"></ion-icon> A {{ order.distance }} km de ti
-              </p>
-              <p>Método: {{ order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia QR' }}</p>
-            </ion-label>
-            <ion-button slot="end" style="--background: #04644c;" @click.stop="acceptOrder(order.id)">Aceptar</ion-button>
-          </ion-item>
-        </ion-list>
-        
-        <div v-if="availableOrders.length === 0" class="ion-text-center ion-padding" style="color: var(--ion-color-medium); margin-top: 50px;">
-          <ion-icon :icon="mapOutline" style="font-size: 64px;"></ion-icon>
-          <p>No hay pedidos disponibles para asignar</p>
+        <div v-if="loading" class="ion-text-center ion-padding" style="margin-top: 50px;">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+        <div v-else>
+          <ion-list class="items-list" v-if="availableOrders.length > 0">
+            <ion-item v-for="order in availableOrders" :key="order.id" class="ion-margin-bottom order-item" button @click="openDetails(order)" lines="none">
+              <ion-label>
+                <h2 style="font-weight: 600;">Pedido #{{ order.id }}</h2>
+                <p v-if="order.distance" style="color: var(--ion-color-primary); font-weight: 600;">
+                  <ion-icon :icon="navigateOutline"></ion-icon> A {{ order.distance }} km de ti
+                </p>
+                <p>Método: {{ order.payment_method === 'cash' ? 'Efectivo' : 'Transferencia QR' }}</p>
+                <p style="font-weight: bold; color: var(--ion-color-success);">Cobrar: Bs. {{ order.total_amount + order.delivery_cost }}</p>
+              </ion-label>
+              <ion-button slot="end" style="--background: #04644c;" @click.stop="acceptOrder(order.id)">Aceptar</ion-button>
+            </ion-item>
+          </ion-list>
+          
+          <div v-else class="ion-text-center ion-padding" style="color: var(--ion-color-medium); margin-top: 50px;">
+            <ion-icon :icon="mapOutline" style="font-size: 64px;"></ion-icon>
+            <p>No hay pedidos disponibles para asignar</p>
+          </div>
         </div>
       </div>
 
       <div v-if="segment === 'mine'">
-        <ion-list class="items-list">
-          <ion-item v-for="order in myOrders" :key="order.id" class="ion-margin-bottom order-item" lines="none">
-            <ion-label>
-              <h2 style="font-weight: 600;">Pedido #{{ order.id }}</h2>
-              <p>Destino: {{ order.location?.name }} - {{ order.location?.address }}</p>
-              <p v-if="order.status === 'delivered'" style="color: #2ed573; font-weight: bold; margin-top: 5px;">Entregado</p>
-              <p v-else style="color: #ff9f43; font-weight: bold; margin-top: 5px;">En Ruta</p>
-            </ion-label>
-            <div slot="end" style="display:flex; gap: 8px;">
-              <ion-button fill="outline" @click="openDetails(order)">
-                <ion-icon slot="icon-only" :icon="listOutline"></ion-icon>
-              </ion-button>
-              <ion-button color="primary" @click="openRoute(order)">
-                VER RUTA
-              </ion-button>
-            </div>
-          </ion-item>
-        </ion-list>
-        
-        <div v-if="myOrders.length === 0" class="ion-text-center ion-padding" style="color: var(--ion-color-medium); margin-top: 50px;">
-          <ion-icon :icon="checkmarkCircleOutline" style="font-size: 64px;"></ion-icon>
-          <p>No tienes entregas pendientes</p>
+        <div v-if="loading" class="ion-text-center ion-padding" style="margin-top: 50px;">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+        <div v-else>
+          <ion-list class="items-list" v-if="myOrders.length > 0">
+            <ion-item v-for="order in myOrders" :key="order.id" class="ion-margin-bottom order-item" lines="none">
+              <ion-label>
+                <h2 style="font-weight: 600;">Pedido #{{ order.id }}</h2>
+                <p>Destino: {{ order.location?.name }} - {{ order.location?.address }}</p>
+                <p v-if="order.status === 'delivered'" style="color: #2ed573; font-weight: bold; margin-top: 5px;">Entregado</p>
+                <p v-else style="color: #ff9f43; font-weight: bold; margin-top: 5px;">En Ruta</p>
+              </ion-label>
+              <div slot="end" style="display:flex; gap: 8px;">
+                <ion-button fill="outline" @click="openDetails(order)">
+                  <ion-icon slot="icon-only" :icon="listOutline"></ion-icon>
+                </ion-button>
+                <ion-button color="primary" @click="openRoute(order)">
+                  VER RUTA
+                </ion-button>
+              </div>
+            </ion-item>
+          </ion-list>
+          
+          <div v-else class="ion-text-center ion-padding" style="color: var(--ion-color-medium); margin-top: 50px;">
+            <ion-icon :icon="checkmarkCircleOutline" style="font-size: 64px;"></ion-icon>
+            <p>No tienes entregas pendientes</p>
+          </div>
         </div>
       </div>
 
@@ -73,8 +87,8 @@
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
-        <ion-content class="ion-padding" style="--background: #f7f9fc;">
-          <div v-if="selectedOrder" class="details-card">
+    <ion-content class="ion-padding" style="--background: var(--ion-background-color, #f7f9fc);">
+      <div v-if="selectedOrder" class="details-card">
             
             <div class="detail-section">
               <h3>Datos del Cliente</h3>
@@ -123,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonButtons, IonTitle, IonContent, IonSegment, IonSegmentButton, IonLabel, IonList, IonItem, IonButton, onIonViewWillEnter, toastController, IonModal, IonIcon } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonButtons, IonTitle, IonContent, IonSegment, IonSegmentButton, IonLabel, IonList, IonItem, IonButton, onIonViewWillEnter, toastController, IonModal, IonIcon, IonRefresher, IonRefresherContent, IonSpinner } from '@ionic/vue';
 import { checkmarkCircleOutline, mapOutline, listOutline, navigateOutline, printOutline } from 'ionicons/icons';
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -134,6 +148,7 @@ const segment = ref('available');
 const availableOrders = ref<any[]>([]);
 const myOrders = ref<any[]>([]);
 const selectedOrder = ref<any>(null);
+const loading = ref(true);
 
 const deg2rad = (deg: number) => deg * (Math.PI / 180);
 const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -166,18 +181,26 @@ const calculateDistances = (orders: any[]) => {
 };
 
 const fetchAvailable = async () => {
+  loading.value = true;
   try {
     const res = await axios.get('/api/delivery/orders/available');
     availableOrders.value = res.data;
     calculateDistances(availableOrders.value);
-  } catch(e) {}
+  } catch(e) {
+  } finally {
+    loading.value = false;
+  }
 };
 
 const fetchMine = async () => {
+  loading.value = true;
   try {
     const res = await axios.get('/api/delivery/my-orders');
     myOrders.value = res.data;
-  } catch(e) {}
+  } catch(e) {
+  } finally {
+    loading.value = false;
+  }
 };
 
 const openDetails = async (order: any) => {
@@ -281,6 +304,15 @@ onIonViewWillEnter(() => {
   fetchAvailable();
   fetchMine();
 });
+
+const handleRefresh = async (event: any) => {
+  if (segment.value === 'available') {
+    await fetchAvailable();
+  } else {
+    await fetchMine();
+  }
+  event.target.complete();
+};
 </script>
 
 <style scoped>
@@ -288,7 +320,6 @@ onIonViewWillEnter(() => {
   background: transparent;
 }
 .order-item {
-  --background: #ffffff;
   --border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   --padding-start: 15px;

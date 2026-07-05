@@ -21,8 +21,10 @@ class OrderController extends Controller
         );
 
         if ($quota->attempted && $quota->quantity_bought == 0) {
-            // El usuario ya intentó comprar este lote y no terminó. Queda bloqueado para este producto.
-            return response()->json(['error' => 'Ya utilizaste tu único intento para este lote de producto.'], 403);
+            $diffMinutes = now()->diffInMinutes($quota->updated_at);
+            if ($diffMinutes < 30) {
+                return response()->json(['error' => 'Ya utilizaste tu único intento para este producto. Debes esperar ' . (30 - $diffMinutes) . ' minutos para volver a intentarlo.'], 403);
+            }
         }
 
         // Marcar como intentado
@@ -80,7 +82,8 @@ class OrderController extends Controller
                 }
                 $totalPointsCost += ($product->points_cost * $item['quantity']);
             } else {
-                $totalAmount += ($product->precio_venta * $item['quantity']);
+                $price = $product->promotional_price ?? $product->precio_venta;
+                $totalAmount += ($price * $item['quantity']);
             }
 
             $quota = \App\Models\UserProductQuota::firstOrCreate(
@@ -173,7 +176,7 @@ class OrderController extends Controller
                 'order_id' => $order->id,
                 'product_id' => $product->id, // Maintain original product in order
                 'quantity' => $item['quantity'],
-                'price_at_time' => $isReward ? 0 : $product->precio_venta
+                'price_at_time' => $isReward ? 0 : ($product->promotional_price ?? $product->precio_venta)
             ]);
 
             // Descontar stock por lotes (FIFO) del producto objetivo

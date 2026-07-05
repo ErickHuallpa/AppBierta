@@ -193,8 +193,9 @@ class AdminController extends Controller
 
         $batch = ProductBatch::findOrFail($id);
         $batch->status = $request->status;
-        if ($request->has('discount_price')) {
-            $batch->discount_price = $request->discount_price;
+        if ($request->status === 'promotion') {
+            $product = $batch->product;
+            $batch->discount_price = round(($product->precio_venta * 0.8) * 2) / 2;
         }
         $batch->save();
 
@@ -228,7 +229,7 @@ class AdminController extends Controller
             ->whereIn('orders.status', ['delivered', 'completed'])
             ->whereDate('orders.created_at', '>=', $startDate)
             ->whereDate('orders.created_at', '<=', $endDate)
-            ->selectRaw('products.name as product, SUM(order_items.quantity) as total_quantity')
+            ->selectRaw('products.name as product, SUM(order_items.quantity * IFNULL(products.package_multiplier, 1)) as total_quantity')
             ->groupBy('products.id', 'products.name')
             ->orderByDesc('total_quantity')
             ->limit(10)
@@ -269,7 +270,8 @@ class AdminController extends Controller
                 'orders.created_at as fecha',
                 \DB::raw("CONCAT(COALESCE(client_persona.nombre,''), ' ', COALESCE(client_persona.apellidos,'')) as cliente"),
                 'products.name as producto',
-                \DB::raw('COALESCE(order_item_batches.quantity, order_items.quantity) as cantidad'),
+                'order_items.quantity as cantidad_vendida',
+                \DB::raw('COALESCE(order_item_batches.quantity, order_items.quantity) as cantidad_lotes'),
                 'order_items.price_at_time as precio_venta',
                 'product_batches.purchase_price as precio_compra',
                 'orders.payment_method as metodo_pago',
@@ -320,5 +322,21 @@ class AdminController extends Controller
         }
 
         return response()->json($query->take(20)->get());
+    }
+
+    public function pickupOrders()
+    {
+        $orders = \App\Models\Order::where('status', 'ready_for_pickup')
+                    ->with(['user.persona', 'items.product'])
+                    ->get();
+        return response()->json($orders);
+    }
+
+    public function markDelivered($id)
+    {
+        $order = \App\Models\Order::findOrFail($id);
+        $order->status = 'delivered';
+        $order->save();
+        return response()->json(['message' => 'Pedido entregado exitosamente']);
     }
 }

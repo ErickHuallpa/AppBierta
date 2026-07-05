@@ -12,7 +12,11 @@
       <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
-      <ion-list v-if="locations.length > 0" style="background: transparent;">
+      <div v-if="loading" class="ion-text-center ion-padding" style="margin-top: 50px;">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <ion-list v-else-if="locations.length > 0" style="background: transparent;">
         <ion-item v-for="loc in locations" :key="loc.id" class="location-item">
           <div class="location-content">
             <ion-label>
@@ -34,7 +38,7 @@
         </ion-item>
       </ion-list>
       
-      <div v-if="locations.length === 0" class="ion-text-center ion-padding">
+      <div v-else class="ion-text-center ion-padding">
         <p>No tienes ubicaciones guardadas.</p>
       </div>
 
@@ -48,22 +52,26 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonBackButton, onIonViewWillEnter, IonRefresher, IonRefresherContent, alertController } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel, IonBadge, IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonBackButton, onIonViewWillEnter, IonRefresher, IonRefresherContent, alertController, IonSpinner } from '@ionic/vue';
 import { add, createOutline, starOutline, trashOutline } from 'ionicons/icons';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const locations = ref<any[]>([]);
+const loading = ref(true);
 const router = useRouter();
 
 const fetchLocations = async () => {
+  loading.value = true;
   try {
     const res = await axios.get('/api/locations');
     locations.value = res.data;
     window.dispatchEvent(new Event('locationsUpdated'));
   } catch (error) {
     console.error(error);
+  } finally {
+    loading.value = false;
   }
 };
 

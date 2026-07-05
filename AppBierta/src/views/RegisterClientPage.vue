@@ -137,7 +137,7 @@ const registerClient = async () => {
   try {
     const res = await axios.post('/api/register/client', form.value);
     authState.setAuth(res.data.access_token, res.data.user);
-    router.push('/home');
+    window.location.href = '/tabs/home';
   } catch (error: any) {
     let errorMessage = 'Error al registrar el cliente';
     if (error.response?.data?.errors) {

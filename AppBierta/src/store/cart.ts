@@ -1,7 +1,10 @@
-import { reactive } from 'vue';
+import { reactive, watch } from 'vue';
+
+const savedCart = localStorage.getItem('cartState');
+const initialItems = savedCart ? JSON.parse(savedCart) : [];
 
 export const cartState = reactive({
-  items: [] as Array<{ product_id: number; name: string; price: number; quantity: number, image_url?: string, is_reward?: boolean, points_cost?: number, points_reward?: number }>,
+  items: initialItems as Array<{ product_id: number; name: string; price: number; quantity: number, max_qty: number, image_url?: string, is_reward?: boolean, points_cost?: number, points_reward?: number }>,
   checkout: {
     order_type: 'delivery' as 'delivery' | 'pickup',
     notes: '',
@@ -16,20 +19,30 @@ export const cartState = reactive({
   },
 
   addItems(product: any, quantity: number, isReward: boolean = false) {
+    const max_qty = product.real_stock !== undefined ? product.real_stock : Infinity;
     const existing = this.items.find(i => i.product_id === product.id && i.is_reward === isReward);
     if (existing) {
-      existing.quantity += quantity;
+      if (existing.quantity + quantity <= existing.max_qty) {
+        existing.quantity += quantity;
+      } else {
+        existing.quantity = existing.max_qty;
+      }
     } else {
-      this.items.push({
-        product_id: product.id,
-        name: product.name,
-        price: isReward ? 0 : Number(product.precio_venta),
-        quantity: quantity,
-        image_url: product.image_url || `https://placehold.co/150x150/eeeeee/333333?text=${product.name}`,
-        is_reward: isReward,
-        points_cost: isReward ? Number(product.points_cost || 0) : 0,
-        points_reward: isReward ? 0 : Number(product.points_reward || 0)
-      });
+      let qtyToAdd = quantity;
+      if (qtyToAdd > max_qty) qtyToAdd = max_qty;
+      if (qtyToAdd > 0) {
+        this.items.push({
+          product_id: product.id,
+          name: product.name,
+          price: isReward ? 0 : Number(product.promotional_price || product.precio_venta),
+          quantity: qtyToAdd,
+          max_qty: max_qty,
+          image_url: product.image_url || `https://placehold.co/150x150/eeeeee/333333?text=${product.name}`,
+          is_reward: isReward,
+          points_cost: isReward ? Number(product.points_cost || 0) : 0,
+          points_reward: isReward ? 0 : Number(product.points_reward || 0)
+        });
+      }
     }
   },
 
@@ -72,3 +85,7 @@ export const cartState = reactive({
     return this.items.reduce((sum: number, item: any) => sum + ((item.points_cost || 0) * item.quantity), 0);
   },
 });
+
+watch(() => cartState.items, (newItems) => {
+  localStorage.setItem('cartState', JSON.stringify(newItems));
+}, { deep: true });

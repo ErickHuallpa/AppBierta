@@ -91,7 +91,7 @@ const login = async () => {
     authState.setAuth(res.data.access_token, res.data.user);
     email.value = '';
     password.value = '';
-    router.push('/home');
+    window.location.href = '/tabs/home';
   } catch (error: any) {
     const toast = await toastController.create({
       message: error.response?.data?.message || 'Error al iniciar sesión',

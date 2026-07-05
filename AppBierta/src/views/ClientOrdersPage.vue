@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonSpinner, IonIcon, IonButton, IonBadge, IonModal, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonRefresher, IonRefresherContent, toastController } from '@ionic/vue';
 import { receiptOutline, star, starOutline } from 'ionicons/icons';
 import axios from 'axios';
@@ -138,6 +138,11 @@ const tempRating = ref(0);
 
 onMounted(async () => {
   fetchOrders();
+  window.addEventListener('ordersUpdated', fetchOrders);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('ordersUpdated', fetchOrders);
 });
 
 const fetchOrders = async () => {

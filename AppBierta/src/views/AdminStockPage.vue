@@ -15,11 +15,11 @@
         </ion-card-header>
         <ion-card-content>
           <form @submit.prevent="submitBatch">
-            <ion-item class="pro-input" lines="none">
+            <ion-item class="pro-input" lines="none" button @click="isProductModalOpen = true">
               <ion-label position="stacked">Producto</ion-label>
-              <ion-select v-model="form.product_id" placeholder="Selecciona un producto">
-                <ion-select-option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</ion-select-option>
-              </ion-select>
+              <div style="padding: 10px 0; color: var(--ion-color-dark);">
+                {{ selectedProductName || 'Toca para buscar un producto' }}
+              </div>
             </ion-item>
 
             <ion-item class="pro-input" lines="none">
@@ -32,8 +32,8 @@
             </ion-item>
 
             <ion-item class="pro-input" lines="none">
-              <ion-label position="stacked">Cantidad (Unidades)</ion-label>
-              <ion-input type="number" v-model="form.quantity" required min="1"></ion-input>
+              <ion-label position="stacked">Cantidad (Unidades - Múltiplos de 6)</ion-label>
+              <ion-input type="number" v-model="form.quantity" required min="6" step="6"></ion-input>
             </ion-item>
 
             <ion-item class="pro-input" lines="none">
@@ -52,23 +52,53 @@
           </form>
         </ion-card-content>
       </ion-card>
+
+      <!-- Modal Selector de Producto -->
+      <ion-modal :is-open="isProductModalOpen" @didDismiss="isProductModalOpen = false">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Buscar Producto</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="isProductModalOpen = false">Cerrar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+          <ion-toolbar>
+            <ion-searchbar v-model="searchQuery" placeholder="Ej: Paceña Lata"></ion-searchbar>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content>
+          <ion-list>
+            <ion-item v-for="p in filteredProducts" :key="p.id" button @click="selectProduct(p)">
+              <ion-label>
+                <h2>{{ p.name }}</h2>
+                <p>Stock actual: <strong style="color: var(--ion-color-primary);">{{ p.stock }} unidades</strong></p>
+              </ion-label>
+            </ion-item>
+            <ion-item v-if="filteredProducts.length === 0">
+              <ion-label color="medium" class="ion-text-center">No se encontraron productos base</ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-modal>
+
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { 
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton,
   IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonButton,
+  IonModal, IonSearchbar, IonList,
   toastController, alertController
 } from '@ionic/vue';
 import axios from 'axios';
 
 const form = ref({
-  product_id: null,
+  product_id: null as number | null,
   supplier_id: null,
-  quantity: '',
+  quantity: 6,
   purchase_price: '',
   expiry_date: ''
 });
@@ -76,6 +106,25 @@ const form = ref({
 const products = ref<any[]>([]);
 const suppliers = ref<any[]>([]);
 const loading = ref(false);
+
+const isProductModalOpen = ref(false);
+const searchQuery = ref('');
+const selectedProductName = ref('');
+
+const filteredProducts = computed(() => {
+  const query = searchQuery.value.toLowerCase();
+  return products.value.filter(p => 
+    p.parent_id === null && 
+    p.name.toLowerCase().includes(query)
+  );
+});
+
+const selectProduct = (product: any) => {
+  form.value.product_id = product.id;
+  selectedProductName.value = product.name;
+  form.value.purchase_price = product.last_purchase_price || '';
+  isProductModalOpen.value = false;
+};
 
 const loadData = async () => {
   try {
@@ -105,7 +154,9 @@ const submitBatch = async () => {
       color: 'success'
     });
     await toast.present();
-    form.value = { product_id: null, supplier_id: null, quantity: '', purchase_price: '', expiry_date: '' };
+    form.value = { product_id: null, supplier_id: null, quantity: 6, purchase_price: '', expiry_date: '' };
+    selectedProductName.value = '';
+    await loadData(); // Reload stock
   } catch (e: any) {
     const toast = await toastController.create({
       message: e.response?.data?.error || 'Error al guardar',

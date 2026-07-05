@@ -19,7 +19,7 @@ class Product extends Model
         'package_multiplier'
     ];
 
-    protected $appends = ['real_stock'];
+    protected $appends = ['real_stock', 'last_purchase_price', 'promotional_price', 'promotional_stock'];
 
     public function category()
     {
@@ -48,5 +48,34 @@ class Product extends Model
             return floor($this->parent->real_stock / $this->package_multiplier);
         }
         return $this->stock; // Base product stock
+    }
+
+    public function getLastPurchasePriceAttribute()
+    {
+        $lastBatch = $this->batches()->latest()->first();
+        return $lastBatch ? $lastBatch->purchase_price : 0;
+    }
+
+    public function getPromotionalPriceAttribute()
+    {
+        $baseProduct = $this->parent_id && $this->parent ? $this->parent : $this;
+        $promoBatch = $baseProduct->batches()->where('status', 'promotion')->where('quantity_current', '>', 0)->first();
+        if ($promoBatch) {
+            return round(($this->precio_venta * 0.8) * 2) / 2;
+        }
+        return null;
+    }
+
+    public function getPromotionalStockAttribute()
+    {
+        $baseProduct = $this->parent_id && $this->parent ? $this->parent : $this;
+        $promoBatch = $baseProduct->batches()->where('status', 'promotion')->where('quantity_current', '>', 0)->first();
+        if ($promoBatch) {
+            if ($this->parent_id) {
+                 return floor($promoBatch->quantity_current / $this->package_multiplier);
+            }
+            return $promoBatch->quantity_current;
+        }
+        return 0;
     }
 }

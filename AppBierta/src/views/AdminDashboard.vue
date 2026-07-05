@@ -51,6 +51,15 @@
             </ion-card-title>
           </ion-card-header>
         </ion-card>
+
+        <ion-card button router-link="/admin/pickup-orders">
+          <ion-card-header>
+            <ion-card-title>
+              <ion-icon :icon="cubeOutline" class="ion-margin-end"></ion-icon>
+              Entregar Pedidos (Recojo)
+            </ion-card-title>
+          </ion-card-header>
+        </ion-card>
       </div>
 
       <ion-card v-if="authState.isAdmin" class="ion-margin-top admin-card">

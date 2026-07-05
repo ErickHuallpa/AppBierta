@@ -37,7 +37,7 @@
                   <ion-icon :icon="removeOutline"></ion-icon>
                 </button>
                 <span class="qty-value">{{ item.quantity }}</span>
-                <button class="qty-btn add-btn" @click="cart.addItem({id: item.product_id, name: item.name, precio_venta: item.price, points_cost: item.points_cost, points_reward: item.points_reward}, item.is_reward)">
+                <button class="qty-btn add-btn" @click="cart.addItem({id: item.product_id, name: item.name, precio_venta: item.price, points_cost: item.points_cost, points_reward: item.points_reward, real_stock: item.max_qty}, item.is_reward)" :disabled="item.quantity >= item.max_qty">
                   <ion-icon :icon="addOutline"></ion-icon>
                 </button>
               </div>
@@ -108,7 +108,7 @@
           </div>
           <div class="summary-row" v-if="cart.checkout.order_type === 'delivery'" style="margin-top: 10px;">
             <span class="summary-label">Costo estimado delivery</span>
-            <span class="summary-val" style="font-size: 0.8rem; font-weight: normal;">(Se calculará al final)</span>
+            <span class="summary-val" style="font-size: 0.9rem; font-weight: bold;">Bs. 15.00</span>
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@
         <span class="btn-text">Continuar</span>
         <span class="btn-price">
           <span v-if="cart.totalPrice === 0 && cart.totalPointsCost > 0">Pagar con Puntos</span>
-          <span v-else>Bs. {{ cart.totalPrice.toFixed(2) }}</span>
+          <span v-else>Bs. {{ (cart.totalPrice + (cart.checkout.order_type === 'delivery' ? 15 : 0)).toFixed(2) }}</span>
         </span>
       </button>
     </div>
@@ -173,25 +173,6 @@ onMounted(() => {
 
 const goToCheckout = async () => {
   if (isPastCutoff.value) return;
-  
-  // Registrar el "intento" para bloquear la cuota según requerimiento
-  try {
-    for (const item of cart.items) {
-      if (!item.is_reward) {
-        await axios.post('/api/orders/attempt', { product_id: item.product_id });
-      }
-    }
-  } catch (e: any) {
-    const msg = e.response?.data?.error || 'Error de conexión o cuota excedida.';
-    const alert = await alertController.create({
-      header: 'Atención',
-      message: msg,
-      buttons: ['OK']
-    });
-    await alert.present();
-    return; // Stop navigation if attempt fails (e.g. they already attempted)
-  }
-
   router.push('/checkout');
 };
 </script>

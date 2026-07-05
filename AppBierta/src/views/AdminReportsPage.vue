@@ -286,18 +286,18 @@ const salesSummary = computed(() => {
   let ingreso = 0;
   let margen = 0;
   let delivery = 0;
-  let ordersCounted = new Set();
-
   if (rawData.value.detailed_sales) {
+    const ordersCounted = new Set();
     rawData.value.detailed_sales.forEach((s: any) => {
       const pCompra = parseFloat(s.precio_compra || '0');
       const pVenta = parseFloat(s.precio_venta || '0');
-      const cant = parseInt(s.cantidad || '0');
+      const cant_vendida = parseInt(s.cantidad_vendida || '0');
+      const cant_lotes = parseInt(s.cantidad_lotes || '0');
       const deliveryCost = parseFloat(s.delivery_cost || '0');
-
+      
+      ingreso += (pVenta * cant_vendida);
       if (pVenta > 0) {
-        ingreso += (pVenta * cant);
-        margen += ((pVenta * cant) - (pCompra * cant));
+        margen += ((pVenta * cant_vendida) - (pCompra * cant_lotes));
       }
       
       if (deliveryCost > 0 && !ordersCounted.has(s.pedido_id)) {
@@ -331,18 +331,19 @@ const groupedSales = computed(() => {
     const order = map.get(s.pedido_id);
     const pCompra = parseFloat(s.precio_compra || 0);
     const pVenta = parseFloat(s.precio_venta || 0);
-    const cant = parseInt(s.cantidad || 0);
+    const cant_vendida = parseInt(s.cantidad_vendida || 0);
+    const cant_lotes = parseInt(s.cantidad_lotes || 0);
     
-    order.costo_total += pCompra * cant;
-    order.ingreso_total += pVenta * cant;
+    order.costo_total += pCompra * cant_lotes;
+    order.ingreso_total += pVenta * cant_vendida;
     
     // Si la venta no es un canje por puntos, sumar margen
     if (pVenta > 0) {
-        order.margen += (pVenta - pCompra) * cant;
+        order.margen += (pVenta * cant_vendida) - (pCompra * cant_lotes);
     }
     
-    const prodName = pVenta === 0 ? `${s.producto} (Canje)` : s.producto;
-    order.productos.push(`${cant}x ${prodName}`);
+    const prodName = pVenta === 0 ? `${s.producto} (Canje)` : `${s.producto} (Bs. ${pVenta})`;
+    order.productos.push(`${cant_vendida}x ${prodName}`);
   });
   
   // Agregar costo de delivery al total de la orden si corresponde
@@ -431,11 +432,12 @@ const exportToExcel = async () => {
       rawData.value.detailed_sales.forEach((s: any) => {
         const pCompra = parseFloat(s.precio_compra || '0');
         const pVenta = parseFloat(s.precio_venta || '0');
-        const cant = parseInt(s.cantidad || '0');
+        const cant_vendida = parseInt(s.cantidad_vendida || '0');
+        const cant_lotes = parseInt(s.cantidad_lotes || '0');
         const isCanje = (pVenta === 0);
         
-        const costoTotal = pCompra * cant;
-        const ingresoTotal = pVenta * cant;
+        const costoTotal = pCompra * cant_lotes;
+        const ingresoTotal = pVenta * cant_vendida;
         const margen = isCanje ? 0 : (ingresoTotal - costoTotal);
 
         if (!isCanje) {
@@ -451,18 +453,18 @@ const exportToExcel = async () => {
 
         const row = worksheet.addRow({
           id: s.pedido_id,
-          fecha: new Date(s.fecha).toLocaleString(),
+          fecha: s.fecha,
           cliente: s.cliente,
           producto: s.producto,
-          cantidad: cant,
+          cantidad: cant_vendida,
           pCompra: pCompra,
           pVenta: pVenta,
           costo: costoTotal,
           ingreso: ingresoTotal,
           margen: margen,
           pago: metodoPago,
-          tipo: s.tipo_pedido === 'delivery' ? 'Delivery' : 'Tienda',
-          atendido: s.empleado_delivery ? s.empleado_delivery : 'N/A'
+          tipo: s.tipo_pedido === 'delivery' ? 'Delivery' : 'Recojo en Tienda',
+          atendido: s.empleado_delivery || 'N/A'
         });
 
         if (isCanje) {
@@ -669,5 +671,23 @@ onMounted(() => {
   color: #aaaaaa;
   font-size: 0.9em;
   font-weight: 600;
+}
+@media (prefers-color-scheme: dark) {
+  .pro-card, .sales-summary, .styled-table {
+    background-color: #1e2023 !important;
+    color: #ffffff !important;
+    border-color: #333333 !important;
+  }
+  .styled-table tbody tr:nth-of-type(even) {
+    background-color: #2a2c2f !important;
+  }
+  .styled-table th, .styled-table td, .styled-table tbody tr {
+    border-color: #333333 !important;
+  }
+  ion-segment-button {
+    --color: #cccccc;
+    --color-checked: #ffffff;
+    --indicator-color: #04644c;
+  }
 }
 </style>

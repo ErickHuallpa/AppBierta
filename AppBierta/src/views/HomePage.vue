@@ -106,7 +106,7 @@ const fetchLocations = async () => {
 const fetchCategories = async () => {
   try {
     const catRes = await axios.get('/api/categories');
-    categories.value = catRes.data;
+    categories.value = catRes.data.filter((c: any) => c.name.toLowerCase() !== 'paquetes');
   } catch (error) {
     console.error('Error fetching categories', error);
   }

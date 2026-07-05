@@ -10,6 +10,10 @@
     </ion-header>
 
     <ion-content color="light">
+      <ion-refresher slot="fixed" @ionRefresh="handleRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+      </ion-refresher>
+
       <div class="points-header">
         <ion-icon :icon="star" class="points-icon"></ion-icon>
         <h2 class="points-title">Tus Puntos</h2>
@@ -73,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonIcon, IonProgressBar, IonButton, IonList, IonItem, IonSpinner, toastController } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonIcon, IonProgressBar, IonButton, IonList, IonItem, IonSpinner, IonRefresher, IonRefresherContent, toastController, alertController } from '@ionic/vue';
 import { star, cartOutline } from 'ionicons/icons';
 import { authState } from '../store/auth';
 import { cartState } from '../store/cart';
@@ -89,7 +93,7 @@ const currentPoints = computed(() => {
 });
 
 const rewardProducts = computed(() => {
-  return products.value.filter(p => p.points_cost && p.points_cost > 0);
+  return products.value.filter(p => p.parent_id !== null && p.points_cost && p.points_cost > 0);
 });
 
 const loadData = async () => {
@@ -109,15 +113,36 @@ const loadData = async () => {
   }
 };
 
+const handleRefresh = async (event: any) => {
+  await loadData();
+  event.target.complete();
+};
+
 const redeemProduct = async (prod: any) => {
   if (currentPoints.value >= prod.points_cost) {
-    cartState.addItem(prod, true); // true = isReward
-    const t = await toastController.create({
-      message: `${prod.name} añadido al carrito como recompensa.`,
-      duration: 2000,
-      color: 'success'
+    const alert = await alertController.create({
+      header: 'Confirmar Canje',
+      message: `¿Estás seguro de que deseas usar ${prod.points_cost} puntos para obtener "${prod.name}" gratis?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Sí, Canjear',
+          handler: async () => {
+            cartState.addItem(prod, true); // true = isReward
+            const t = await toastController.create({
+              message: `${prod.name} añadido al carrito como recompensa.`,
+              duration: 2000,
+              color: 'success'
+            });
+            await t.present();
+          }
+        }
+      ]
     });
-    await t.present();
+    await alert.present();
   }
 };
 
@@ -171,7 +196,7 @@ onMounted(() => {
 
 .section-title {
   font-weight: 700;
-  color: #333;
+  color: var(--ion-text-color, #333);
   margin-bottom: 15px;
   padding-left: 5px;
 }
@@ -184,7 +209,7 @@ onMounted(() => {
 }
 
 .reward-card {
-  background: #fff;
+  background: var(--ion-item-background, #fff);
   border-radius: 12px;
   width: 100%;
   padding: 15px;
@@ -211,7 +236,7 @@ onMounted(() => {
 .reward-info h4 {
   margin: 0 0 5px 0;
   font-weight: 700;
-  color: #222;
+  color: var(--ion-text-color, #222);
 }
 
 .stats-row {
@@ -223,7 +248,7 @@ onMounted(() => {
 
 .cost {
   margin: 0;
-  color: #666;
+  color: var(--ion-color-step-600, #666);
   font-size: 0.95rem;
 }
 

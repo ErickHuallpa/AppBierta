@@ -88,6 +88,7 @@ const checkOrderUpdates = async () => {
           icon: bicycleOutline
         });
         await t.present();
+        window.dispatchEvent(new CustomEvent('ordersUpdated'));
       }
       lastStatuses.value[order.id] = order.status;
     }
